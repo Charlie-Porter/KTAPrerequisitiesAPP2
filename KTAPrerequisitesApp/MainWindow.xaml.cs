@@ -63,7 +63,7 @@ namespace KTAPrerequisitesApp
             switch (selection)
             {
                 case "TotalAgility WebApp server (Including OPMT)":
-                    string[] WebApp = new string[] { "NET-Framework-Features", "NET-WCF-HTTP-Activation" };
+                    string[] WebApp = new string[] { "NET-Framework-Features", "NET-HTTP-Activation", "Web-Windows-Auth","Web-Asp-Net45","Web-Static-Content","NET-Framework-Core","NET-WCF-HTTP-Activation45", };
                     featureList.AddRange(WebApp);
                     break;
     

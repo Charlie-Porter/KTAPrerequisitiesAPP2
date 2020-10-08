@@ -143,50 +143,9 @@ namespace KTAPrerequisitesApp
             return executionSuccess;
         }
 
-        async public Task<bool> NewADContainer(Runspace runspace)
-        {
-            bool executionSuccess;
+        
 
-            //' Create PowerShell instance
-            using (PowerShell psInstance = PowerShell.Create())
-            {
-                //' Set runspace
-                psInstance.Runspace = runspace;
-
-                //' Add embedded PowerShell script file
-                Assembly assembly = Assembly.GetExecutingAssembly();
-                using (Stream stream = assembly.GetManifestResourceStream("ConfigMgrPrerequisitesTool.Scripts.CreateSystemManagementContainer.ps1"))
-                using (StreamReader reader = new StreamReader(stream))
-                {
-                    string result = reader.ReadToEnd();
-                    psInstance.AddScript(result);
-                }
-
-                // Construct collection to hold pipeline stream objects
-                PSDataCollection<PSObject> streamCollection = new PSDataCollection<PSObject>();
-
-                // Invoke execution on the pipeline and collection any errors
-                PSDataCollection<PSObject> tResult = await Task.Factory.FromAsync(psInstance.BeginInvoke<PSObject, PSObject>(null, streamCollection), pResult => psInstance.EndInvoke(pResult));
-                executionSuccess = psInstance.HadErrors;
-            }
-
-            return executionSuccess;
-        }
-
-        public Runspace NewRunspace(WSManConnectionInfo connectionInfo)
-        {
-            Runspace runspace = RunspaceFactory.CreateRunspace(connectionInfo);
-
-            return runspace;
-        }
-
-        public WSManConnectionInfo NewWSManConnectionInfo(string computer, PSCredential credentials)
-        {
-            WSManConnectionInfo connectionInfo = new WSManConnectionInfo(false, computer, 5985, "/wsman", "http://schemas.microsoft.com/powershell/Microsoft.PowerShell", credentials);
-            connectionInfo.OperationTimeout = 2 * 15 * 1000;
-            connectionInfo.OpenTimeout = 1 * 15 * 1000;
-
-            return connectionInfo;
-        }
+       
+        
     }
 }
