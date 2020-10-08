@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30524.135
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KTAPrerequisitesApp", "KTAPrerequisitesApp\KTAPrerequisitesApp.csproj", "{ED89BCE2-ADAD-4783-80E7-AEF3E5B16051}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{ED89BCE2-ADAD-4783-80E7-AEF3E5B16051}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ED89BCE2-ADAD-4783-80E7-AEF3E5B16051}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ED89BCE2-ADAD-4783-80E7-AEF3E5B16051}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ED89BCE2-ADAD-4783-80E7-AEF3E5B16051}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {0313FCE2-C3D2-42BA-8E30-593C7A3B15E5}
+	EndGlobalSection
+EndGlobal
