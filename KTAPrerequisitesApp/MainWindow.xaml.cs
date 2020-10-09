@@ -88,11 +88,11 @@ namespace KTAPrerequisitesApp
                     {
 
                         myProcess.StartInfo.UseShellExecute = false;
-                        myProcess.StartInfo.FileName = path;
-                        myProcess.StartInfo.Arguments = "/i ADDLOCAL=ALL APPGUID={0CC618CE-F36A-415E-84B4-FB1BFF6967E1}";
+                        myProcess.StartInfo.FileName = "msiexec";
+                        myProcess.StartInfo.Arguments = string.Format(" /i {1} {0}", "ADDLOCAL=ALL /quiet IACCEPTSQLNCLILICENSETERMS=YES ADDLOCAL=ALL /L*V " + Directory.GetCurrentDirectory() + "\\sqlncli.log", path);
                         myProcess.Start();
+                        myProcess.WaitForExit();
                         return result = "Installed";
-
                     }
                 }
                 catch (Exception ex)
