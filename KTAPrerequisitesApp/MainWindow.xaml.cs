@@ -23,7 +23,8 @@ using System.Globalization;
 using System.Collections.Specialized;
 using System.Net.NetworkInformation;
 using System.Management;
-
+using WindowsInstaller;
+using Microsoft.Win32;
 
 namespace KTAPrerequisitesApp
 {
@@ -39,20 +40,10 @@ namespace KTAPrerequisitesApp
         private ObservableCollection<WindowsFeature> installTypeCollection = new ObservableCollection<WindowsFeature>();
 
 
-        //' Initialize global Settings section objects
-        private PSCredential psCredentials = null;
-        private SqlConnection sqlConnection = null;
-
-        //' Construct dictionaries
-        Dictionary<string, string> loadedADKversions = new Dictionary<string, string>();
-
+      
         public MainWindow()
         {
             InitializeComponent();
-
-            //' Set item source for data grids
-            dataGridInstallType.ItemsSource = installTypeCollection;
-
         }
 
 
@@ -72,15 +63,46 @@ namespace KTAPrerequisitesApp
             return featureList;
         }
 
-        private void comboBoxInstallType_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private string Installmsi()
         {
+            string result;
 
+            if (IsSoftwareInstalled("Microsoft SQL Server 2012 Native Client "))
+            {
+                result = "NoChangeNeeded";
+                return result;
+            }
+            else
+            {
+                try
+                {
+                    //Type type = Type.GetTypeFromProgID("WindowsInstaller.Installer");
+                    //Installer installer = (Installer)Activator.CreateInstance(type);
+                    //installer.UILevel = MsiUILevel.msiUILevelNone;
+
+                    string path = Directory.GetCurrentDirectory() + $@"\sqlncli.msi";
+                    //installer.InstallProduct($@"{directory}\sqlncli.msi", "ACTION=ADMIN");
+
+                    //return result = "Installed";
+                    using (Process myProcess = new Process())
+                    {
+
+                        myProcess.StartInfo.UseShellExecute = false;
+                        myProcess.StartInfo.FileName = path;
+                        myProcess.StartInfo.Arguments = "/i ADDLOCAL=ALL APPGUID={0CC618CE-F36A-415E-84B4-FB1BFF6967E1}";
+                        myProcess.Start();
+                        return result = "Installed";
+
+                    }
+                }
+                catch (Exception ex)
+                {
+                    result = ex.ToString();
+                    return result;
+                }
+            }
         }
 
-        private void button_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
 
         
         async private void  B_Install_Click(object sender, RoutedEventArgs e)
@@ -90,6 +112,8 @@ namespace KTAPrerequisitesApp
             {
                 installTypeCollection.Clear();
             }
+            //' Set item source for data grids
+            dataGridInstallType.ItemsSource = installTypeCollection;
 
             //' Get windows features for selected site type
             List<string> featureList = GetWindowsFeatures(comboBoxInstallType.SelectedItem.ToString());
@@ -100,15 +124,20 @@ namespace KTAPrerequisitesApp
             int progressBarValue = 0;
             labelSiteTypeProgress.Content = string.Empty;
 
+            //' Add new item for current windows feature installation state
+            progressBarValue = 1;                     
+            string result = Installmsi();
+            installTypeCollection.Add(new WindowsFeature { Name = "SQL Server 2012 Native Client", Result = result });
+            dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
             //' Process each windows feature for installation
             foreach (string feature in featureList)
             {
                 //' Update progress bar
                 progressBarSiteType.Value = progressBarValue++;
-                labelSiteTypeProgress.Content = String.Format("{0} / {1}", progressBarValue, featureList.Count);
+                labelSiteTypeProgress.Content = String.Format("{0} / {1}", progressBarValue, featureList.Count + 1);
 
                 //' Add new item for current windows feature installation state
-                installTypeCollection.Add(new WindowsFeature { Name = feature, Progress = true, Result = "Installing..." });
+                installTypeCollection.Add(new WindowsFeature { Name = feature, Result = "Installing..." });
                 dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
 
 
@@ -121,35 +150,36 @@ namespace KTAPrerequisitesApp
                 {
                     var currentCollectionItem = installTypeCollection.FirstOrDefault(winFeature => winFeature.Name == feature);
 
-                    if (featureState == "Failed")
-                    {
-                        if (checkBoxInstallTypeRetryFailed.IsChecked == true)
-                        {
-                            //' Invoke windows feature installation via PowerShell runspace with alternate source
-                            currentCollectionItem.Result = "RetryWithSource";
-                            object retryResult = await scriptEngine.AddWindowsFeature(feature, textBoxSettingsSource.Text);
-                            featureState = retryResult.ToString();
-
-                            if (featureState == "Failed")
-                            {
-                                featureState = "FailedAfterRetry";
-                            }
-                        }
-                    }
-
                     //' Update datagrid elements
-                    currentCollectionItem.Progress = false;
                     currentCollectionItem.Result = featureState;
                 }
 
-                //' Set color of progressbar
-                // new prop needed for binding
             }
         }
 
-        private void button_Click_1(object sender, RoutedEventArgs e)
+
+        private void comboBoxInstallType_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
 
+        }
+        /// <summary>
+        /// https://stackoverflow.com/questions/16379143/check-if-application-is-installed-in-registry
+        /// </summary>
+        /// <param name="softwareName"></param>
+        /// <returns></returns>
+        private static bool IsSoftwareInstalled(string softwareName)
+        {
+            var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall") ??
+                      Registry.LocalMachine.OpenSubKey(
+                          @"SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall");
+
+            if (key == null)
+                return false;
+
+            return key.GetSubKeyNames()
+                .Select(keyName => key.OpenSubKey(keyName))
+                .Select(subkey => subkey.GetValue("DisplayName") as string)
+                .Any(displayName => displayName != null && displayName.Contains(softwareName));
         }
     }
 }

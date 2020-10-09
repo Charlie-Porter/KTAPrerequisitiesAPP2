@@ -5,12 +5,11 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:KTAPrerequisitesApp" xmlns:System="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="450" Width="500">
     <Grid>
-        <DataGrid x:Name="dataGridInstallType" HorizontalAlignment="Left" Height="114" Margin="10,142,0,0" VerticalAlignment="Top" Width="472"/>
-        <TextBox x:Name="textBoxSettingsSource" HorizontalAlignment="Left" Height="25" Margin="220,13,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="255" Text="localhost"/>
-        <Button x:Name="B_Install" Content="Install" HorizontalAlignment="Left" Margin="407,268,0,0" VerticalAlignment="Top" Width="75" Click="B_Install_Click" RenderTransformOrigin="-0.809,2.717"/>
-        <ComboBox x:Name="comboBoxInstallType" HorizontalAlignment="Left" Margin="220,55,0,0" VerticalAlignment="Top" Width="120" SelectionChanged="comboBoxInstallType_SelectionChanged">
+        <DataGrid x:Name="dataGridInstallType" HorizontalAlignment="Left" Height="252" Margin="13,126,0,0" VerticalAlignment="Top" Width="465"/>
+        <Button x:Name="B_Install" Content="Install" HorizontalAlignment="Left" Margin="400,52,0,0" VerticalAlignment="Top" Width="75" Click="B_Install_Click" RenderTransformOrigin="-0.809,2.717"/>
+        <ComboBox x:Name="comboBoxInstallType" SelectedIndex="0" HorizontalAlignment="Left" Margin="202,25,0,0" VerticalAlignment="Top" Width="273" SelectionChanged="comboBoxInstallType_SelectionChanged">
             <System:String>TotalAgility WebApp server (Including OPMT)</System:String>
             <System:String>TotalAgility Web Only (Including OPMT)</System:String>
             <System:String>TotalAgility Transformation Server</System:String>
@@ -18,11 +17,9 @@
             <System:String>TotalAgility Intergration Server</System:String>
             <System:String>TotalAgility DB Only</System:String>
         </ComboBox>
-        <ProgressBar x:Name="progressBarSiteType" HorizontalAlignment="Left" Margin="13,96,0,0" VerticalAlignment="Top" Width="462" Height="28" Background="#FF252525"/>
+        <ProgressBar x:Name="progressBarSiteType" HorizontalAlignment="Left" Margin="13,83,0,0" VerticalAlignment="Top" Width="462" Height="28" Background="#FF252525"/>
         <Label x:Name="labelSiteTypeProgress" Content="" HorizontalAlignment="Left" Margin="247,111,0,0" VerticalAlignment="Top"/>
-        <CheckBox x:Name="checkBoxInstallTypeRetryFailed" Content="Retry if failed" HorizontalAlignment="Left" Margin="386,66,0,0" VerticalAlignment="Top"/>
-        <Label x:Name="l_hostname" Content="Please enter the hostname" HorizontalAlignment="Left" Margin="10,12,0,0" VerticalAlignment="Top"/>
-        <Label x:Name="label" Content="Please enter the KTA install type:" HorizontalAlignment="Left" Margin="10,55,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="label" Content="Please select the KTA install type:" HorizontalAlignment="Left" Margin="13,21,0,0" VerticalAlignment="Top"/>
 
     </Grid>
 </Window>

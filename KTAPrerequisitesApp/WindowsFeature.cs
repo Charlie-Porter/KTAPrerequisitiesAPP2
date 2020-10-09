@@ -9,9 +9,8 @@ namespace KTAPrerequisitesApp
 {
     public class WindowsFeature : INotifyPropertyChanged
     {
-        public string Server { get; set; }
+        
         public string Name { get; set; }
-        private bool _Progress;
         private string _Result;
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -28,18 +27,7 @@ namespace KTAPrerequisitesApp
             }
         }
 
-        public bool Progress
-        {
-            get { return _Progress; }
-            set
-            {
-                if (_Progress != value)
-                {
-                    _Progress = value;
-                    OnPropertyChanged("Progress");
-                }
-            }
-        }
+       
 
         public string Result
         {
