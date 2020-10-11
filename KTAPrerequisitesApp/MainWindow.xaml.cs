@@ -3,28 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
-using System.Management.Automation;
-using System.Management.Automation.Runspaces;
-using System.ComponentModel;
-using System.Threading.Tasks;
-using System.Collections;
 using System.Data;
-using System.Net;
-using System.Data.SqlClient;
-using System.Text.RegularExpressions;
-using System.Windows.Data;
-using System.Text;
-using System.Windows.Markup;
-using System.Globalization;
-using System.Collections.Specialized;
-using System.Net.NetworkInformation;
 using System.Management;
-using WindowsInstaller;
 using Microsoft.Win32;
+using System.Data.SqlClient;
 
 namespace KTAPrerequisitesApp
 {
@@ -43,7 +28,8 @@ namespace KTAPrerequisitesApp
       
         public MainWindow()
         {
-            InitializeComponent();
+            Window_Loaded();
+            InitializeComponent();         
         }
 
 
@@ -53,17 +39,44 @@ namespace KTAPrerequisitesApp
 
             switch (selection)
             {
-                case "TotalAgility WebApp server (Including OPMT)":
-                    string[] WebApp = new string[] { "NET-Framework-Features", "NET-HTTP-Activation", "Web-Windows-Auth","Web-Asp-Net45","Web-Static-Content","NET-Framework-Core","NET-WCF-HTTP-Activation45", };
+                case "TotalAgility WebApp server(Including OPMT)":
+                    string[] WebApp = new string[] { "Web-Mgmt-Console", "NET-Framework-Features",  "Web-Windows-Auth","Web-Asp-Net45","Web-Static-Content","NET-Framework-Core","NET-WCF-HTTP-Activation45", };
                     featureList.AddRange(WebApp);
                     break;
-    
+                    case "TotalAgility Web Only(Including OPMT)":
+                    string[] Web = new string[] { "Web-Mgmt-Console", "NET-Framework-Features",  "Web-Windows-Auth","Web-Asp-Net45","Web-Static-Content","NET-Framework-Core","NET-WCF-HTTP-Activation45", };
+                    featureList.AddRange(Web);
+                    break;
+                case "TotalAgility APP Only(Including OPMT)":
+                    string[] APP = new string[] { "Web-Mgmt-Console", "NET-Framework-Features", "Web-Windows-Auth", "Web-Asp-Net45", "Web-Static-Content", "NET-Framework-Core", "NET-WCF-HTTP-Activation45", };
+                    featureList.AddRange(APP);
+                    break;
+                case "TotalAgility Transformation Server":
+                    string[] TS = new string[] { "" };
+                    featureList.AddRange(TS);
+                    break;
+                    case "TotalAgility Transformation Server(OPMT)":
+                    string[] TSOPMT = new string[] { "", };
+                    featureList.AddRange(TSOPMT);
+                    break;
+                    case "TotalAgility Intergration Server":
+                    string[] IS = new string[] { "Web-Mgmt-Console","NET-Framework-Features",  "Web-Windows-Auth","Web-Asp-Net45","Web-Static-Content","NET-Framework-Core","NET-WCF-HTTP-Activation45", };
+                    featureList.AddRange(IS);
+                    break;
+                    case "TotalAgility RTTS":
+                    string[] RTTS = new string[] { "Web-Mgmt-Console", "NET-Framework-Features", "Web-Windows-Auth","Web-Asp-Net45","Web-Static-Content","NET-Framework-Core","NET-WCF-HTTP-Activation45", };
+                    featureList.AddRange(RTTS);
+                    break;
+                    case "TotalAgility DB Only":
+                    string[] DB = new string[] { "", };
+                    featureList.AddRange(DB);
+                    break;
             }
 
             return featureList;
         }
 
-        private string Installmsi()
+        private string Installsqlncli()
         {
             string result;
 
@@ -76,14 +89,9 @@ namespace KTAPrerequisitesApp
             {
                 try
                 {
-                    //Type type = Type.GetTypeFromProgID("WindowsInstaller.Installer");
-                    //Installer installer = (Installer)Activator.CreateInstance(type);
-                    //installer.UILevel = MsiUILevel.msiUILevelNone;
 
                     string path = Directory.GetCurrentDirectory() + $@"\sqlncli.msi";
-                    //installer.InstallProduct($@"{directory}\sqlncli.msi", "ACTION=ADMIN");
-
-                    //return result = "Installed";
+                   
                     using (Process myProcess = new Process())
                     {
 
@@ -104,59 +112,304 @@ namespace KTAPrerequisitesApp
         }
 
 
-        
-        async private void  B_Install_Click(object sender, RoutedEventArgs e)
+        private string Installsqlcmd()
         {
+            string result;
+
+            if (IsSoftwareInstalled("Microsoft Command Line Utilities"))
+            {
+                result = "NoChangeNeeded";
+                return result;
+            }
+            else
+            {
+                try
+                {
+                    string path = Directory.GetCurrentDirectory() + $@"\MsSqlCmdLnUtils.msi";
+
+                    using (Process myProcess = new Process())
+                    {
+
+                        myProcess.StartInfo.UseShellExecute = false;
+                        myProcess.StartInfo.FileName = "msiexec";
+                        myProcess.StartInfo.Arguments = string.Format(" /i {1} {0}", "ADDLOCAL=ALL /quiet IACCEPTSQLNCLILICENSETERMS=YES ADDLOCAL=ALL /L*V " + Directory.GetCurrentDirectory() + "\\sqlncli.log", path);
+                        myProcess.Start();
+                        myProcess.WaitForExit();
+                        return result = "Installed";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    result = ex.ToString();
+                    return result;
+                }
+            }
+        }
+        /// <summary>
+        /// https://stackoverflow.com/questions/56548873/c-sharp-sql-server-add-roles-to-database-user
+        /// </summary>
+        /// <param name="usertobeadded"></param>
+        /// <param name="password"></param>
+        /// <param name="server"></param>
+        /// <param name="winauth"></param>
+        /// <returns></returns>
+        private static string CheckSqlServerUserAccount(string usertobeadded, string password, string server, bool winauth )
+        {
+            string connectionString;
+
+            if (winauth == false)
+            {
+                connectionString = $@"Data Source={server};User ID={usertobeadded};Password={password}";
+            }
+            else
+            {
+                connectionString = $@"Data Source={server};Trusted_Connection=True";
+            }
+
+            
+
+            string cmdText = $@"EXEC sp_addsrvrolemember '{usertobeadded}', 'dbcreator';";
+
+            // The connection is automatically closed at the end of the using block.
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                try
+                {
+                    SqlCommand cmd = new SqlCommand(cmdText, connection);
+                    connection.Open();
+                    cmd.ExecuteNonQuery();
+                    return ($@"Granted DBCreator role to {usertobeadded}");
+                }
+                catch (Exception ex)
+                {
+                    return ex.Message;
+                    
+                }
+            }
+        }
+
+
+        async private void B_Install_Click(object sender, RoutedEventArgs e)
+        {
+
             //' Clear existing items from observable collection
             if (dataGridInstallType.Items.Count >= 1)
             {
                 installTypeCollection.Clear();
             }
+
             //' Set item source for data grids
             dataGridInstallType.ItemsSource = installTypeCollection;
+
 
             //' Get windows features for selected site type
             List<string> featureList = GetWindowsFeatures(comboBoxInstallType.SelectedItem.ToString());
 
-
-            //' Update progress bar properties
-            progressBarSiteType.Maximum = featureList.Count - 1;
             int progressBarValue = 0;
-            labelSiteTypeProgress.Content = string.Empty;
 
-            //' Add new item for current windows feature installation state
-            progressBarValue = 1;                     
-            string result = Installmsi();
-            installTypeCollection.Add(new WindowsFeature { Name = "SQL Server 2012 Native Client", Result = result });
-            dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
-            //' Process each windows feature for installation
-            foreach (string feature in featureList)
+            //0 TotalAgility WebApp server(Including OPMT)
+
+            //  1  TotalAgility Web Only(Including OPMT)
+
+            //    2  TotalAgility APP Only(Including OPMT)
+
+            //     3   TotalAgility Transformation Server
+
+            //        4    TotalAgility Transformation Server(OPMT)
+
+            //         5     TotalAgility Intergration Server
+
+            //          6   TotalAgility RTTS 
+
+            //            7    TotalAgility DB Only
+
+
+            if (comboBoxInstallType.SelectedIndex == 0 || comboBoxInstallType.SelectedIndex == 2 || comboBoxInstallType.SelectedIndex == 3 || comboBoxInstallType.SelectedIndex == 4 || comboBoxInstallType.SelectedIndex == 5 || comboBoxInstallType.SelectedIndex == 6) 
             {
-                //' Update progress bar
-                progressBarSiteType.Value = progressBarValue++;
-                labelSiteTypeProgress.Content = String.Format("{0} / {1}", progressBarValue, featureList.Count + 1);
 
-                //' Add new item for current windows feature installation state
-                installTypeCollection.Add(new WindowsFeature { Name = feature, Result = "Installing..." });
+                
+                string dbcreatorResult;
+                if (cb_WinAuth.IsChecked == true)
+                {
+                    dbcreatorResult = CheckSqlServerUserAccount(txt_ServiceAcc.Text, txt_sqlpassword.Text, txt_sqlserver.Text, true);
+
+                }
+                else
+                {
+                    dbcreatorResult = CheckSqlServerUserAccount(txt_SQLuser.Text, txt_sqlpassword.Text, txt_sqlserver.Text, false);
+                }
+
+                progressBarValue = 1;
+                installTypeCollection.Add(new WindowsFeature { Name = "Grant SQL dbcreator role", Result = dbcreatorResult });
                 dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
 
 
-                //' Invoke windows feature installation via PowerShell runspace
-                object installResult = await scriptEngine.AddWindowsFeature(feature);
-                string featureState = installResult.ToString();
+                //' Update progress bar properties
+                progressBarSiteType.Maximum = featureList.Count + 4;
+                
+                progressBarValue = 1;
+                installTypeCollection.Add(new WindowsFeature { Name = "Grant Service Account Logon As A Service rights", Result = GrantUserLogOnAsAService(txt_ServiceAcc.Text) });
+                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
 
-                //' Update current row on data grid
-                if (!String.IsNullOrEmpty(featureState))
+                //' Add new item for current windows feature installation state
+                progressBarValue = 2;
+                installTypeCollection.Add(new WindowsFeature { Name = "SQL Server 2012 Native Client", Result = Installsqlncli() });
+                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
+
+                progressBarValue = 3;
+                installTypeCollection.Add(new WindowsFeature { Name = "SQL Server Command Line Utility", Result = Installsqlcmd() });
+                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
+
+            }
+            if (comboBoxInstallType.SelectedIndex == 1) // Web Only Server OPMT
+            {
+                //' Update progress bar properties
+                progressBarSiteType.Maximum = featureList.Count + 2;
+                progressBarValue = 1;
+                installTypeCollection.Add(new WindowsFeature { Name = "Grant Service Account Logon As A Service rights", Result = GrantUserLogOnAsAService(txt_ServiceAcc.Text) });
+                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
+
+            }
+
+            if (comboBoxInstallType.SelectedIndex == 4) // Transformation Sercer OPMT
+            {
+
+                //' Update progress bar properties
+                progressBarSiteType.Maximum = featureList.Count + 4;
+                progressBarValue = 4;
+                installTypeCollection.Add(new WindowsFeature { Name = "Granted Replace a process level token rights", Result = GrantReplaceAProcessLevelToken(txt_ServiceAcc.Text) });
+                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
+
+                progressBarValue = 5;
+                installTypeCollection.Add(new WindowsFeature { Name = "Granted Adjust Memory Quotas For A Process", Result = GrantAdjustMemoryQuotasForAProcess(txt_ServiceAcc.Text) });
+                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
+
+                progressBarValue = 6;
+                installTypeCollection.Add(new WindowsFeature { Name = "Granted Create a token object", Result = GrantCreateATokenObject(txt_ServiceAcc.Text) });
+                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
+            }
+
+            if (comboBoxInstallType.SelectedIndex == 7)
+            {
+                //' Update progress bar properties
+                progressBarSiteType.Maximum = featureList.Count + 3;
+                //' Add new item for current windows feature installation state
+                progressBarValue = 2;
+                installTypeCollection.Add(new WindowsFeature { Name = "SQL Server 2012 Native Client", Result = Installsqlncli() });
+                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
+
+                progressBarValue = 3;
+                installTypeCollection.Add(new WindowsFeature { Name = "SQL Server Command Line Utility", Result = Installsqlcmd() });
+                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
+            }
+
+
+            //' Process each windows feature for installation
+            foreach (string feature in featureList)
+            {
+                if (!String.IsNullOrEmpty(feature))
                 {
-                    var currentCollectionItem = installTypeCollection.FirstOrDefault(winFeature => winFeature.Name == feature);
+                    //' Update progress bar
+                    progressBarSiteType.Value = progressBarValue++;
+                    
 
-                    //' Update datagrid elements
-                    currentCollectionItem.Result = featureState;
+                    //' Add new item for current windows feature installation state
+                    installTypeCollection.Add(new WindowsFeature { Name = feature, Result = "Installing..." });
+                    dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
+
+
+                    //' Invoke windows feature installation via PowerShell runspace
+                    object installResult = await scriptEngine.AddWindowsFeature(feature);
+                    string featureState = installResult.ToString();
+
+                    //' Update current row on data grid
+                    if (!String.IsNullOrEmpty(featureState))
+                    {
+                        var currentCollectionItem = installTypeCollection.FirstOrDefault(winFeature => winFeature.Name == feature);
+
+                        //' Update datagrid elements
+                        currentCollectionItem.Result = featureState;
+                    }
                 }
 
             }
+            progressBarSiteType.Value = progressBarSiteType.Maximum;
+
+            MessageBoxResult result = MessageBox.Show("Prerequisites are applied to this system. We would recommend a system restart to ensure all changes are applied. Click Yes to restart or No to cancel.", "System Restart", MessageBoxButton.YesNo);
+            
+            if (result== MessageBoxResult.Yes)
+            {
+                SystemRestart();
+            } 
         }
 
+        private void SystemRestart()
+        {
+            var cmd = new ProcessStartInfo("shutdown.exe", "-r -t 0");
+            cmd.CreateNoWindow = true;
+            cmd.UseShellExecute = false;
+            cmd.ErrorDialog = false;
+            Process.Start(cmd);
+        }
+
+
+
+        private static string GrantUserLogOnAsAService(string userName)
+        {
+            try
+            {
+                LsaWrapper lsaUtility = new LsaWrapper();
+                lsaUtility.SetRight(userName, "SeServiceLogonRight");
+                return ("Logon as a Service right is granted to " + userName);
+            }
+            catch (Exception ex)
+            {
+                return(ex.Message);
+            }
+        }
+
+        private static string GrantReplaceAProcessLevelToken(string userName)
+        {
+            try
+            {
+                LsaWrapper lsaUtility = new LsaWrapper();
+                lsaUtility.SetRight(userName, "SeAssignPrimaryTokenPrivilege");
+                return ("Replace a process level token right is granted to " + userName);
+            }
+            catch (Exception ex)
+            {
+                return (ex.Message);
+            }
+        }
+
+        private static string GrantCreateATokenObject(string userName)
+        {
+            try
+            {
+                LsaWrapper lsaUtility = new LsaWrapper();
+                lsaUtility.SetRight(userName, "SeCreateTokenPrivilege");
+                return ("Create a token object right is granted");
+            }
+            catch (Exception ex)
+            {
+                return (ex.Message);
+            }
+        }
+
+
+        public static string GrantAdjustMemoryQuotasForAProcess(string userName)
+        {
+            try
+            {
+                LsaWrapper lsaUtility = new LsaWrapper();
+                lsaUtility.SetRight(userName, "SeIncreaseQuotaPrivilege");
+                return ("Adjust memory quotas for a process is granted");
+            }
+            catch (Exception ex)
+            {
+                return (ex.Message);
+            }
+        }
 
         private void comboBoxInstallType_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -180,6 +433,68 @@ namespace KTAPrerequisitesApp
                 .Select(keyName => key.OpenSubKey(keyName))
                 .Select(subkey => subkey.GetValue("DisplayName") as string)
                 .Any(displayName => displayName != null && displayName.Contains(softwareName));
+        }
+        
+        private void Window_Loaded()
+        {
+            MessageBoxResult result;
+            //' Check environment prerequisites
+            uint productType = GetProductType();
+            switch (productType)
+            {
+                case 0:
+                    result = MessageBox.Show("Unable to detect platform product type from WMI. Application will now terminate.", "UNHANDLED ERROR", MessageBoxButton.OK);
+                    Environment.Exit(0);
+                    break;
+                case 1:
+                    result = MessageBox.Show("Unsupported platform detected. Kofax TotalAgility supports Windows 2008 or above.", "UNSUPPORTED PLATFORM", MessageBoxButton.OK);
+                    Environment.Exit(0);
+                    break;
+                case 2:
+                    result = MessageBox.Show("Unsupported platform type detect. It's not recommended to run this application on a domain controller.", "WARNING", MessageBoxButton.OK);
+                    Environment.Exit(0);
+                    break;
+                
+            }
+            
+
+
+
+        }
+
+       
+
+    public uint GetProductType()
+        {
+            uint productType = 0;
+
+            using (ManagementObjectSearcher searcher = new ManagementObjectSearcher("SELECT * FROM Win32_OperatingSystem"))
+            {
+                foreach (ManagementObject managementObject in searcher.Get())
+                {
+                    productType = (uint)managementObject.GetPropertyValue("ProductType");
+                }
+            }
+
+            return productType;
+        }
+
+        private void cb_WinAuth_Checked(object sender, RoutedEventArgs e)
+        {
+            if (cb_WinAuth.IsChecked == true)
+            {
+                txt_SQLuser.IsEnabled = false;
+                txt_sqlpassword.IsEnabled = false;
+                l_sqluser.IsEnabled = false;
+                l_sqlpassword.IsEnabled = false;
+            }
+            else
+            {
+                txt_SQLuser.IsEnabled = true;
+                txt_sqlpassword.IsEnabled = true;
+                l_sqluser.IsEnabled = true;
+                l_sqlpassword.IsEnabled = true;
+            }
         }
     }
 }
