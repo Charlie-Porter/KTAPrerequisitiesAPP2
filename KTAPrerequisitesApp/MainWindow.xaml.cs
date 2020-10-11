@@ -253,11 +253,11 @@ namespace KTAPrerequisitesApp
 
                 //' Add new item for current windows feature installation state
                 progressBarValue = 2;
-                installTypeCollection.Add(new WindowsFeature { Name = "SQL Server 2012 Native Client", Result = Installsqlncli() });
+                installTypeCollection.Add(new WindowsFeature { Name = "Grant SQL Server 2012 Native Client", Result = Installsqlncli() });
                 dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
 
                 progressBarValue = 3;
-                installTypeCollection.Add(new WindowsFeature { Name = "SQL Server Command Line Utility", Result = Installsqlcmd() });
+                installTypeCollection.Add(new WindowsFeature { Name = " Grant SQL Server Command Line Utility", Result = Installsqlcmd() });
                 dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
 
             }
@@ -277,15 +277,15 @@ namespace KTAPrerequisitesApp
                 //' Update progress bar properties
                 progressBarSiteType.Maximum = featureList.Count + 4;
                 progressBarValue = 4;
-                installTypeCollection.Add(new WindowsFeature { Name = "Granted Replace a process level token rights", Result = GrantReplaceAProcessLevelToken(txt_ServiceAcc.Text) });
+                installTypeCollection.Add(new WindowsFeature { Name = "Grant Replace a process level token rights", Result = GrantReplaceAProcessLevelToken(txt_ServiceAcc.Text) });
                 dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
 
                 progressBarValue = 5;
-                installTypeCollection.Add(new WindowsFeature { Name = "Granted Adjust Memory Quotas For A Process", Result = GrantAdjustMemoryQuotasForAProcess(txt_ServiceAcc.Text) });
+                installTypeCollection.Add(new WindowsFeature { Name = "Grant Adjust Memory Quotas For A Process", Result = GrantAdjustMemoryQuotasForAProcess(txt_ServiceAcc.Text) });
                 dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
 
                 progressBarValue = 6;
-                installTypeCollection.Add(new WindowsFeature { Name = "Granted Create a token object", Result = GrantCreateATokenObject(txt_ServiceAcc.Text) });
+                installTypeCollection.Add(new WindowsFeature { Name = "Grant Create a token object", Result = GrantCreateATokenObject(txt_ServiceAcc.Text) });
                 dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
             }
 
@@ -295,11 +295,11 @@ namespace KTAPrerequisitesApp
                 progressBarSiteType.Maximum = featureList.Count + 3;
                 //' Add new item for current windows feature installation state
                 progressBarValue = 2;
-                installTypeCollection.Add(new WindowsFeature { Name = "SQL Server 2012 Native Client", Result = Installsqlncli() });
+                installTypeCollection.Add(new WindowsFeature { Name = "Grant SQL Server 2012 Native Client", Result = Installsqlncli() });
                 dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
 
                 progressBarValue = 3;
-                installTypeCollection.Add(new WindowsFeature { Name = "SQL Server Command Line Utility", Result = Installsqlcmd() });
+                installTypeCollection.Add(new WindowsFeature { Name = "Grant SQL Server Command Line Utility", Result = Installsqlcmd() });
                 dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
             }
 
@@ -360,7 +360,7 @@ namespace KTAPrerequisitesApp
             {
                 LsaWrapper lsaUtility = new LsaWrapper();
                 lsaUtility.SetRight(userName, "SeServiceLogonRight");
-                return ("Logon as a Service right is granted to " + userName);
+                return ("Granted Logon as a Service right");
             }
             catch (Exception ex)
             {
@@ -374,7 +374,7 @@ namespace KTAPrerequisitesApp
             {
                 LsaWrapper lsaUtility = new LsaWrapper();
                 lsaUtility.SetRight(userName, "SeAssignPrimaryTokenPrivilege");
-                return ("Replace a process level token right is granted to " + userName);
+                return ("Granted Replace a process level token right");
             }
             catch (Exception ex)
             {
@@ -388,7 +388,7 @@ namespace KTAPrerequisitesApp
             {
                 LsaWrapper lsaUtility = new LsaWrapper();
                 lsaUtility.SetRight(userName, "SeCreateTokenPrivilege");
-                return ("Create a token object right is granted");
+                return ("Granted Create a token object right");
             }
             catch (Exception ex)
             {
@@ -403,7 +403,7 @@ namespace KTAPrerequisitesApp
             {
                 LsaWrapper lsaUtility = new LsaWrapper();
                 lsaUtility.SetRight(userName, "SeIncreaseQuotaPrivilege");
-                return ("Adjust memory quotas for a process is granted");
+                return ("Granted Adjust memory quotas for a process");
             }
             catch (Exception ex)
             {
