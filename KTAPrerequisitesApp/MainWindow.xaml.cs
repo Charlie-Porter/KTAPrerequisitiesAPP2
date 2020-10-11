@@ -10,11 +10,14 @@ using System.Data;
 using System.Management;
 using Microsoft.Win32;
 using System.Data.SqlClient;
+using System.Windows.Media.Imaging;
 
 namespace KTAPrerequisitesApp
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// Interaction logic for MainWindow.xaml 
+    /// https://github.com/AngryCarrot789/WPFDarkTheme
+    /// https://www.youtube.com/watch?v=5OdkVXW5Z0E
     /// </summary>
     public partial class MainWindow : Window
     {
@@ -29,7 +32,9 @@ namespace KTAPrerequisitesApp
         public MainWindow()
         {
             Window_Loaded();
-            InitializeComponent();         
+            InitializeComponent();
+            Uri iconUri = new Uri("pack://application:,,,/Resources/kofaxlogo.png", UriKind.RelativeOrAbsolute);
+            this.Icon = BitmapFrame.Create(iconUri);
         }
 
 
@@ -257,7 +262,7 @@ namespace KTAPrerequisitesApp
                 dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
 
                 progressBarValue = 3;
-                installTypeCollection.Add(new WindowsFeature { Name = " Grant SQL Server Command Line Utility", Result = Installsqlcmd() });
+                installTypeCollection.Add(new WindowsFeature { Name = "Grant SQL Server Command Line Utility", Result = Installsqlcmd() });
                 dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
 
             }
@@ -335,7 +340,7 @@ namespace KTAPrerequisitesApp
             }
             progressBarSiteType.Value = progressBarSiteType.Maximum;
 
-            MessageBoxResult result = MessageBox.Show("Prerequisites are applied to this system. We would recommend a system restart to ensure all changes are applied. Click Yes to restart or No to cancel.", "System Restart", MessageBoxButton.YesNo);
+            MessageBoxResult result = MessageBox.Show("Prerequisites are applied to this system. You may want to restart the system to ensure all changes are applied. Click Yes to restart or No to cancel.", "System Restart", MessageBoxButton.YesNo);
             
             if (result== MessageBoxResult.Yes)
             {
