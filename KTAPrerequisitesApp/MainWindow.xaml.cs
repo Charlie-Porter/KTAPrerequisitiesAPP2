@@ -105,7 +105,11 @@ namespace KTAPrerequisitesApp
                         myProcess.StartInfo.Arguments = string.Format(" /i {1} {0}", "ADDLOCAL=ALL /quiet IACCEPTSQLNCLILICENSETERMS=YES ADDLOCAL=ALL /L*V " + Directory.GetCurrentDirectory() + "\\sqlncli.log", path);
                         myProcess.Start();
                         myProcess.WaitForExit();
-                        return result = "Installed";
+                        if (myProcess.ExitCode != 0)
+                        {
+                            return result = $@"Failed to install SQL Native Client tools with error code: {myProcess.ExitCode.ToString()}";
+                        }
+                        return result = "Installed successfully";
                     }
                 }
                 catch (Exception ex)
@@ -140,7 +144,11 @@ namespace KTAPrerequisitesApp
                         myProcess.StartInfo.Arguments = string.Format(" /i {1} {0}", "ADDLOCAL=ALL /quiet IACCEPTSQLNCLILICENSETERMS=YES ADDLOCAL=ALL /L*V " + Directory.GetCurrentDirectory() + "\\sqlncli.log", path);
                         myProcess.Start();
                         myProcess.WaitForExit();
-                        return result = "Installed";
+                        if (myProcess.ExitCode != 0)
+                        {
+                            return result = $@"Failed to install SQL Command Line Utilitys with error code: {myProcess.ExitCode.ToString()}";
+                        }
+                        return result = "Installed successfully";
                     }
                 }
                 catch (Exception ex)
@@ -258,11 +266,11 @@ namespace KTAPrerequisitesApp
 
                 //' Add new item for current windows feature installation state
                 progressBarValue = 2;
-                installTypeCollection.Add(new WindowsFeature { Name = "Grant SQL Server 2012 Native Client", Result = Installsqlncli() });
+                installTypeCollection.Add(new WindowsFeature { Name = "Install SQL Server 2012 Native Client", Result = Installsqlncli() });
                 dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
 
                 progressBarValue = 3;
-                installTypeCollection.Add(new WindowsFeature { Name = "Grant SQL Server Command Line Utility", Result = Installsqlcmd() });
+                installTypeCollection.Add(new WindowsFeature { Name = "Install SQL Server Command Line Utility", Result = Installsqlcmd() });
                 dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
 
             }
@@ -319,7 +327,7 @@ namespace KTAPrerequisitesApp
                     
 
                     //' Add new item for current windows feature installation state
-                    installTypeCollection.Add(new WindowsFeature { Name = feature, Result = "Installing..." });
+                    installTypeCollection.Add(new WindowsFeature { Name = feature, Result = "Granting..." });
                     dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
 
 
