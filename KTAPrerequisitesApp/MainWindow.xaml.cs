@@ -11,6 +11,10 @@ using System.Management;
 using Microsoft.Win32;
 using System.Data.SqlClient;
 using System.Windows.Media.Imaging;
+using System.Security.Principal;
+using System.DirectoryServices.AccountManagement;
+using System.DirectoryServices;
+
 
 namespace KTAPrerequisitesApp
 {
@@ -102,7 +106,7 @@ namespace KTAPrerequisitesApp
 
                         myProcess.StartInfo.UseShellExecute = false;
                         myProcess.StartInfo.FileName = "msiexec";
-                        myProcess.StartInfo.Arguments = string.Format(" /i {1} {0}", "ADDLOCAL=ALL /quiet IACCEPTSQLNCLILICENSETERMS=YES ADDLOCAL=ALL /L*V " + Directory.GetCurrentDirectory() + "\\sqlncli.log", path);
+                        myProcess.StartInfo.Arguments = string.Format(" /i {1} {0}", " /quiet ADDLOCAL=ALL IACCEPTSQLNCLILICENSETERMS=YES /L*V " + Directory.GetCurrentDirectory() + "\\sqlncli.log", path);
                         myProcess.Start();
                         myProcess.WaitForExit();
                         if (myProcess.ExitCode != 0)
@@ -114,7 +118,7 @@ namespace KTAPrerequisitesApp
                 }
                 catch (Exception ex)
                 {
-                    result = ex.ToString();
+                    result = ex.Message;
                     return result;
                 }
             }
@@ -141,7 +145,7 @@ namespace KTAPrerequisitesApp
 
                         myProcess.StartInfo.UseShellExecute = false;
                         myProcess.StartInfo.FileName = "msiexec";
-                        myProcess.StartInfo.Arguments = string.Format(" /i {1} {0}", "ADDLOCAL=ALL /quiet IACCEPTSQLNCLILICENSETERMS=YES ADDLOCAL=ALL /L*V " + Directory.GetCurrentDirectory() + "\\sqlncli.log", path);
+                        myProcess.StartInfo.Arguments = string.Format(" /i {1} {0}", " /quiet ADDLOCAL=ALL IACCEPTMSSQLCMDLNUTILSLICENSETERMS=YES /L*V " + Directory.GetCurrentDirectory() + "\\MsSqlCmdLnUtils.log", path);
                         myProcess.Start();
                         myProcess.WaitForExit();
                         if (myProcess.ExitCode != 0)
@@ -153,7 +157,84 @@ namespace KTAPrerequisitesApp
                 }
                 catch (Exception ex)
                 {
-                    result = ex.ToString();
+                    result = ex.Message;
+                    return result;
+                }
+            }
+        }
+
+        private string Installodbc()
+        {
+            string result;
+
+            if (IsSoftwareInstalled("Microsoft ODBC Driver"))
+            {
+                result = "NoChangeNeeded";
+                return result;
+            }
+            else
+            {
+                try
+                {
+                    string path = Directory.GetCurrentDirectory() + $@"\msodbcsql.msi";
+
+                    using (Process myProcess = new Process())
+                    {
+
+                        myProcess.StartInfo.UseShellExecute = false;
+                        myProcess.StartInfo.FileName = "msiexec";
+                        myProcess.StartInfo.Arguments = string.Format(" /i {1} {0}", " /quiet IACCEPTMSODBCSQLLICENSETERMS=YES ADDLOCAL=ALL /L*V " + Directory.GetCurrentDirectory() + "\\msodbcsql.log", path);
+                        myProcess.Start();
+                        myProcess.WaitForExit();
+                        if (myProcess.ExitCode != 0)
+                        {
+                            return result = $@"Failed to install Microsoft ODBC Driver with error code: {myProcess.ExitCode.ToString()}";
+                        }
+                        return result = "Installed successfully";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    result = ex.Message;
+                    return result;
+                }
+            }
+        }
+
+        private string Installvc_redi()
+        {
+            string result;
+
+            if (IsSoftwareInstalled("Microsoft Visual C++ 2019 X64"))
+            {
+                result = "NoChangeNeeded";
+                return result;
+            }
+            else
+            {
+                try
+                {
+                    string path = Directory.GetCurrentDirectory() + $@"\VC_redist_2019_x64.exe";
+
+                    using (Process myProcess = new Process())
+                    {
+
+                        myProcess.StartInfo.UseShellExecute = false;
+                        myProcess.StartInfo.FileName = "VC_redist_2019_x64.exe";
+                        myProcess.StartInfo.Arguments = (" /q /norestart");
+                        myProcess.Start();
+                        myProcess.WaitForExit();
+
+                        if (myProcess.ExitCode != 0)
+                        {
+                            return result = $@"Failed to install Microsoft Visual C++ Redistributable package with error code: {myProcess.ExitCode.ToString()}";
+                        }
+                        return result = "Installed successfully";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    result = ex.Message;
                     return result;
                 }
             }
@@ -201,10 +282,47 @@ namespace KTAPrerequisitesApp
             }
         }
 
+        private static string TestConnection(string usertobeadded, string password, string server, bool winauth)
+        {
+            string connectionString;
+
+            if (winauth == false)
+            {
+                connectionString = $@"Data Source={server};User ID={usertobeadded};Password={password}";
+            }
+            else
+            {
+                connectionString = $@"Data Source={server};Trusted_Connection=True";
+            }
+
+
+
+           
+
+            // The connection is automatically closed at the end of the using block.
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                try
+                {
+                 
+
+                    connection.Open();
+                    
+                   
+                    return ($@"Connection successful");
+                }
+                catch (Exception ex)
+                {
+                    return "Connection failure (you can continue if you want to grant the dbcreator role at a different time): " +  ex.Message;
+
+                }
+            }
+        }
+
 
         async private void B_Install_Click(object sender, RoutedEventArgs e)
         {
-
+            B_Install.IsEnabled = false;
             //' Clear existing items from observable collection
             if (dataGridInstallType.Items.Count >= 1)
             {
@@ -258,7 +376,7 @@ namespace KTAPrerequisitesApp
 
 
                 //' Update progress bar properties
-                progressBarSiteType.Maximum = featureList.Count + 4;
+                progressBarSiteType.Maximum = featureList.Count + 6;
                 
                 progressBarValue = 1;
                 installTypeCollection.Add(new WindowsFeature { Name = "Grant Service Account Logon As A Service rights", Result = GrantUserLogOnAsAService(txt_ServiceAcc.Text) });
@@ -266,10 +384,21 @@ namespace KTAPrerequisitesApp
 
                 //' Add new item for current windows feature installation state
                 progressBarValue = 2;
+                installTypeCollection.Add(new WindowsFeature { Name = "Install Microsoft Visual C++ Redistributable package", Result = Installvc_redi() });
+                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
+
+                //' Add new item for current windows feature installation state
+                progressBarValue = 3;
                 installTypeCollection.Add(new WindowsFeature { Name = "Install SQL Server 2012 Native Client", Result = Installsqlncli() });
                 dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
 
-                progressBarValue = 3;
+                //' Add new item for current windows feature installation state
+                progressBarValue = 4;
+                installTypeCollection.Add(new WindowsFeature { Name = "Install SQL Server ODBC Driver", Result = Installodbc() });
+                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
+
+
+                progressBarValue = 5;
                 installTypeCollection.Add(new WindowsFeature { Name = "Install SQL Server Command Line Utility", Result = Installsqlcmd() });
                 dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
 
@@ -288,16 +417,17 @@ namespace KTAPrerequisitesApp
             {
 
                 //' Update progress bar properties
-                progressBarSiteType.Maximum = featureList.Count + 4;
-                progressBarValue = 4;
+                progressBarSiteType.Maximum = featureList.Count + 5;
+
+                progressBarValue = 6;
                 installTypeCollection.Add(new WindowsFeature { Name = "Grant Replace a process level token rights", Result = GrantReplaceAProcessLevelToken(txt_ServiceAcc.Text) });
                 dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
 
-                progressBarValue = 5;
+                progressBarValue = 7;
                 installTypeCollection.Add(new WindowsFeature { Name = "Grant Adjust Memory Quotas For A Process", Result = GrantAdjustMemoryQuotasForAProcess(txt_ServiceAcc.Text) });
                 dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
 
-                progressBarValue = 6;
+                progressBarValue = 8;
                 installTypeCollection.Add(new WindowsFeature { Name = "Grant Create a token object", Result = GrantCreateATokenObject(txt_ServiceAcc.Text) });
                 dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
             }
@@ -305,13 +435,25 @@ namespace KTAPrerequisitesApp
             if (comboBoxInstallType.SelectedIndex == 7)
             {
                 //' Update progress bar properties
-                progressBarSiteType.Maximum = featureList.Count + 3;
+                progressBarSiteType.Maximum = featureList.Count + 5;
+
                 //' Add new item for current windows feature installation state
                 progressBarValue = 2;
+                installTypeCollection.Add(new WindowsFeature { Name = "Install Microsoft Visual C++ Redistributable package", Result = Installvc_redi() });
+                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
+
+                //' Add new item for current windows feature installation state
+                progressBarValue = 3;
                 installTypeCollection.Add(new WindowsFeature { Name = "Grant SQL Server 2012 Native Client", Result = Installsqlncli() });
                 dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
 
-                progressBarValue = 3;
+                //' Add new item for current windows feature installation state
+                progressBarValue = 4;
+                installTypeCollection.Add(new WindowsFeature { Name = "Install SQL Server ODBC Driver", Result = Installodbc() });
+                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
+
+
+                progressBarValue = 5;
                 installTypeCollection.Add(new WindowsFeature { Name = "Grant SQL Server Command Line Utility", Result = Installsqlcmd() });
                 dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
             }
@@ -348,6 +490,7 @@ namespace KTAPrerequisitesApp
             }
             progressBarSiteType.Value = progressBarSiteType.Maximum;
 
+            B_Install.IsEnabled = true;
             MessageBoxResult result = MessageBox.Show("Prerequisites are applied to this system. You may want to restart the system to ensure all changes are applied. Click Yes to restart or No to cancel.", "System Restart", MessageBoxButton.YesNo);
             
             if (result== MessageBoxResult.Yes)
@@ -450,34 +593,78 @@ namespace KTAPrerequisitesApp
         
         private void Window_Loaded()
         {
-            MessageBoxResult result;
+            
             //' Check environment prerequisites
             uint productType = GetProductType();
             switch (productType)
             {
                 case 0:
-                    result = MessageBox.Show("Unable to detect platform product type from WMI. Application will now terminate.", "UNHANDLED ERROR", MessageBoxButton.OK);
+                    MessageBox.Show("Unable to detect platform product type from WMI. Application will now terminate.", "UNHANDLED ERROR", MessageBoxButton.OK);
                     Environment.Exit(0);
                     break;
                 case 1:
-                    result = MessageBox.Show("Unsupported platform detected. Kofax TotalAgility supports Windows 2008 or above.", "UNSUPPORTED PLATFORM", MessageBoxButton.OK);
+                     MessageBox.Show("Unsupported platform detected. Kofax TotalAgility supports Windows 2008 or above.", "UNSUPPORTED PLATFORM", MessageBoxButton.OK);
                     Environment.Exit(0);
                     break;
                 case 2:
-                    result = MessageBox.Show("Unsupported platform type detect. It's not recommended to run this application on a domain controller.", "WARNING", MessageBoxButton.OK);
+                    MessageBox.Show("Unsupported platform type detect. It's not recommended to run this application on a domain controller.", "WARNING", MessageBoxButton.OK);
                     Environment.Exit(0);
                     break;
                 
             }
-            
 
-
+            bool IsAdmin = IsInGroup(WindowsIdentity.GetCurrent().Token, "Administrators");
+            switch (IsAdmin)
+            {
+                case false:
+                    MessageBox.Show("We have detected this app is running as a user who is not a member of the local machine administrators group.", "SECURITY ISSUE", MessageBoxButton.OK);
+                    Environment.Exit(0);
+                    break;
+            }
 
         }
 
-       
+        private bool IsInGroup(IntPtr Token, string group)
+        {
+            using (var identity = new WindowsIdentity(Token))
+            {
+                var principal = new WindowsPrincipal(identity);
+                return principal.IsInRole(group);
+            }
+        }
+        /// <summary>
+        /// https://stephenhaunts.com/2013/03/04/checking-a-user-in-active-directory/
+        /// </summary>
+        /// <param name="domain"></param>
+        /// <param name="username"></param>
+        /// <returns></returns>
+        public static bool CheckUserinAD(string domain, string username)
+        {
+            using (var domainContext = new PrincipalContext(ContextType.Domain, domain))
+            {
+                using (var user = new UserPrincipal(domainContext))
+                {
+                    user.SamAccountName = username;
 
-    public uint GetProductType()
+                    using (var pS = new PrincipalSearcher())
+                    {
+                        pS.QueryFilter = user;
+
+                        using (PrincipalSearchResult<Principal> results = pS.FindAll())
+                        {
+                            if (results != null && results.Count() > 0)
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private uint GetProductType()
         {
             uint productType = 0;
 
@@ -488,8 +675,7 @@ namespace KTAPrerequisitesApp
                     productType = (uint)managementObject.GetPropertyValue("ProductType");
                 }
             }
-
-            return productType;
+        return productType;
         }
 
         private void cb_WinAuth_Checked(object sender, RoutedEventArgs e)
@@ -508,6 +694,74 @@ namespace KTAPrerequisitesApp
                 l_sqluser.IsEnabled = true;
                 l_sqlpassword.IsEnabled = true;
             }
+        }
+
+        private void txt_ServiceAcc_LostFocus(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                char[] charSeparators = new char[] { '\\' };
+                var ServiceAcc = txt_ServiceAcc.Text.Split(charSeparators);
+
+                if (!CheckUserinAD(ServiceAcc[0], ServiceAcc[1]))
+                {
+
+
+                    if (!localUserExists(txt_ServiceAcc.Text))
+                    {
+                        tb_message.Text = "Warning - The Service account does not exist in Active Directory or local machine.";
+                    }
+                    else
+                    {
+
+                        tb_message.Text = "Success - The service account exists in your local machine. ";
+                        B_Install.IsEnabled = true;
+                    }
+
+
+                }
+                else
+                {
+                    tb_message.Text = "Success - The service account exists in Active Directory.";
+                    B_Install.IsEnabled = true;
+                }
+            }
+            catch
+            {
+                tb_message.Text = "Failure - The Service account does not exist in Active Directory or locally on this machine.  The install button will be disabled until a valid user is entered.";
+            }
+
+
+
+                
+               
+        }
+
+        static bool localUserExists(string User)
+        {
+
+            using (PrincipalContext pc = new PrincipalContext(ContextType.Machine))
+            {
+                UserPrincipal up = UserPrincipal.FindByIdentity(
+                    pc,
+                    IdentityType.SamAccountName,
+                    User);
+                bool UserExists = (up != null);
+                return UserExists;
+            }
+            
+        }
+
+        private void txt_sqlserver_LostFocus(object sender, RoutedEventArgs e)
+        {
+            
+           
+        }
+
+        private void b_testconnection_Click(object sender, RoutedEventArgs e)
+        { 
+            tb_message.Text = TestConnection(txt_ServiceAcc.Text, txt_sqlpassword.Text, txt_sqlserver.Text, cb_WinAuth.IsEnabled);
+        
         }
     }
 }

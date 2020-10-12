@@ -5,11 +5,11 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:KTAPrerequisitesApp" xmlns:System="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
-        Title="Welcome to our KTA prerequisites app" Height="500" Width="600"
+        Title="Welcome to our KTA 7.8 prerequisites app" Height="500" Width="600"
         Style="{DynamicResource CustomToolWindowStyle}"        >
     <Grid>
-        <DataGrid x:Name="dataGridInstallType" HorizontalAlignment="Left" Height="198" Margin="10,231,0,0" VerticalAlignment="Top" Width="572" IsSynchronizedWithCurrentItem="False"/>
-        <Button x:Name="B_Install" Content="Install" HorizontalAlignment="Left" Margin="507,170,0,0" VerticalAlignment="Top" Width="75" Click="B_Install_Click" RenderTransformOrigin="-0.809,2.717"/>
+        <DataGrid x:Name="dataGridInstallType" HorizontalAlignment="Left" Height="159" Margin="10,270,0,0" VerticalAlignment="Top" Width="572" IsSynchronizedWithCurrentItem="False"/>
+        <Button x:Name="B_Install" IsEnabled="False" Content="Install" HorizontalAlignment="Left" Margin="507,212,0,0" VerticalAlignment="Top" Width="75" Click="B_Install_Click" RenderTransformOrigin="-0.809,2.717"/>
         <ComboBox x:Name="comboBoxInstallType" SelectedIndex="0" HorizontalAlignment="Left" Margin="247,28,0,0" VerticalAlignment="Top" Width="335" SelectionChanged="comboBoxInstallType_SelectionChanged">
             <System:String>TotalAgility WebApp server(Including OPMT)</System:String>
             <System:String>TotalAgility Web Only(Including OPMT)</System:String>
@@ -20,17 +20,19 @@
             <System:String>TotalAgility RTTS</System:String>
             <System:String>TotalAgility DB Only</System:String>
         </ComboBox>
-        <ProgressBar x:Name="progressBarSiteType" HorizontalAlignment="Left" Margin="10,198,0,0" VerticalAlignment="Top" Width="572" Height="28" Background="#FF252525" />
+        <ProgressBar x:Name="progressBarSiteType" HorizontalAlignment="Left" Margin="10,237,0,0" VerticalAlignment="Top" Width="572" Height="28" Background="#FF252525" />
         <Label x:Name="label" Content="Please select the KTA install type:" HorizontalAlignment="Left" Margin="10,24,0,0" VerticalAlignment="Top"/>
         <Label x:Name="l_ServiceAcc" Content="Please enter your KTA service account:" HorizontalAlignment="Left" Margin="10,55,0,0" VerticalAlignment="Top"/>
-        <TextBox x:Name="txt_ServiceAcc" HorizontalAlignment="Left" Height="23" Margin="247,58,0,0" TextWrapping="Wrap" Text="tstest\tsadmin" VerticalAlignment="Top" Width="335"/>
+        <TextBox x:Name="txt_ServiceAcc"   HorizontalAlignment="Left" Height="23" Margin="247,58,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="335" LostFocus="txt_ServiceAcc_LostFocus" Text="domain\username"/>
         <Label x:Name="l_sqlserver" Content="Microsoft SQL server instance location:" HorizontalAlignment="Left" Margin="10,86,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.413,-0.476"/>
-        <Label x:Name="l_sqluser" Content="SQL User:" HorizontalAlignment="Left" Margin="10,139,0,0" VerticalAlignment="Top" IsEnabled="False"/>
-        <Label x:Name="l_sqlpassword" Content="SQL Password:" HorizontalAlignment="Left" Margin="280,139,0,0" VerticalAlignment="Top" IsEnabled="False" Height="23"/>
-        <TextBox x:Name="txt_sqlserver" HorizontalAlignment="Left" Height="23" Margin="247,86,0,0" TextWrapping="Wrap" Text="10.149.208.11" VerticalAlignment="Top" Width="335"/>
-        <TextBox x:Name="txt_SQLuser" HorizontalAlignment="Left" Height="23" Margin="76,142,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="199" IsEnabled="False"/>
-        <TextBox x:Name="txt_sqlpassword" HorizontalAlignment="Left" Height="23" Margin="382,139,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="200" IsEnabled="False"/>
-        <CheckBox x:Name="cb_WinAuth" Content="Use Windows Authentication" HorizontalAlignment="Left" Margin="247,117,0,0" VerticalAlignment="Top" IsChecked="True" Click="cb_WinAuth_Checked"/>
+        <Label x:Name="l_sqluser" Content="SQL User:" HorizontalAlignment="Left" Margin="249,115,0,0" VerticalAlignment="Top" IsEnabled="False"/>
+        <Label x:Name="l_sqlpassword" Content="SQL Password:" HorizontalAlignment="Left" Margin="249,141,0,0" VerticalAlignment="Top" IsEnabled="False" Height="23"/>
+        <TextBox x:Name="txt_sqlserver" HorizontalAlignment="Left" Height="23" Margin="247,86,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="335"/>
+        <TextBox x:Name="txt_SQLuser" HorizontalAlignment="Left" Height="23" Margin="341,115,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="241" IsEnabled="False"/>
+        <TextBox x:Name="txt_sqlpassword" HorizontalAlignment="Left" Height="23" Margin="341,144,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="241" IsEnabled="False"/>
+        <CheckBox x:Name="cb_WinAuth" Content="Use Windows Authentication" HorizontalAlignment="Left" Margin="10,121,0,0" VerticalAlignment="Top" IsChecked="True" Click="cb_WinAuth_Checked"/>
+        <Button x:Name="b_testconnection" Content="Test Connection" HorizontalAlignment="Left" Margin="482,173,0,0" VerticalAlignment="Top" Width="100" Height="25" Click="b_testconnection_Click"/>
+        <TextBlock x:Name="tb_message" IsEnabled="False" TextWrapping="Wrap" HorizontalAlignment="Left" Margin="10,173,0,0" VerticalAlignment="Top" Width="467" Height="59" Text="Status:  Please enter the service account and SQL database intance access details"/>
 
     </Grid>
 </Window>
