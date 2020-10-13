@@ -13,8 +13,6 @@ using System.Data.SqlClient;
 using System.Windows.Media.Imaging;
 using System.Security.Principal;
 using System.DirectoryServices.AccountManagement;
-using System.DirectoryServices;
-
 
 namespace KTAPrerequisitesApp
 {
@@ -39,6 +37,228 @@ namespace KTAPrerequisitesApp
             InitializeComponent();
             Uri iconUri = new Uri("pack://application:,,,/Resources/kofaxlogo.png", UriKind.RelativeOrAbsolute);
             this.Icon = BitmapFrame.Create(iconUri);
+        }
+
+        private void Window_Loaded()
+        {
+
+            //' Check environment prerequisites
+            uint productType = GetProductType();
+            switch (productType)
+            {
+                case 0:
+                    MessageBox.Show("Unable to detect platform product type from WMI. Application will now terminate.", "UNHANDLED ERROR", MessageBoxButton.OK);
+                    Environment.Exit(0);
+                    break;
+                case 1:
+                    MessageBox.Show("Unsupported platform detected. Kofax TotalAgility supports Windows 2008 or above.", "UNSUPPORTED PLATFORM", MessageBoxButton.OK);
+                    Environment.Exit(0);
+                    break;
+                case 2:
+                    MessageBox.Show("Unsupported platform type detect. It's not recommended to run this application on a domain controller.", "WARNING", MessageBoxButton.OK);
+                    Environment.Exit(0);
+                    break;
+
+            }
+
+            bool IsAdmin = IsInGroup(WindowsIdentity.GetCurrent().Token, "Administrators");
+            switch (IsAdmin)
+            {
+                case false:
+                    MessageBox.Show("We have detected this app is running as a user who is not a member of the local machine administrators group.", "SECURITY ISSUE", MessageBoxButton.OK);
+                    Environment.Exit(0);
+                    break;
+            }
+
+        }
+        async private void B_Install_Click(object sender, RoutedEventArgs e)
+        {
+            B_Install.IsEnabled = false;
+
+            dataGridInstallType.Visibility = Visibility.Visible;
+            //' Clear existing items from observable collection
+            if (dataGridInstallType.Items.Count >= 1)
+            {
+                installTypeCollection.Clear();
+            }
+
+            //' Set item source for data grids
+            dataGridInstallType.ItemsSource = installTypeCollection;
+
+
+            //' Get windows features for selected site type
+            List<string> featureList = GetWindowsFeatures(comboBoxInstallType.SelectedItem.ToString());
+
+            int progressBarValue = 0;
+
+            //0 TotalAgility WebApp server(Including OPMT)
+
+            //  1  TotalAgility Web Only(Including OPMT)
+
+            //    2  TotalAgility APP Only(Including OPMT)
+
+            //     3   TotalAgility Transformation Server
+
+            //        4    TotalAgility Transformation Server(OPMT)
+
+            //         5     TotalAgility Intergration Server
+
+            //          6   TotalAgility RTTS 
+
+            //            7    TotalAgility DB Only
+
+
+            if (comboBoxInstallType.SelectedIndex == 0 || comboBoxInstallType.SelectedIndex == 2 || comboBoxInstallType.SelectedIndex == 3 || comboBoxInstallType.SelectedIndex == 4 || comboBoxInstallType.SelectedIndex == 5 || comboBoxInstallType.SelectedIndex == 6)
+            {
+
+
+                string dbcreatorResult;
+                if (cb_winauth.IsChecked == true)
+                {
+                    dbcreatorResult = CheckSqlServerUserAccount(txt_ServiceAcc.Text, txt_sqlpassword.Text, txt_sqlserver.Text, true);
+
+                }
+                else
+                {
+                    dbcreatorResult = CheckSqlServerUserAccount(txt_SQLuser.Text, txt_sqlpassword.Text, txt_sqlserver.Text, false);
+                }
+
+                progressBarValue = 1;
+                installTypeCollection.Add(new WindowsFeature { Name = "Grant SQL dbcreator role", Result = dbcreatorResult });
+                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
+
+
+                //' Update progress bar properties
+                progressBarSiteType.Maximum = featureList.Count + 6;
+
+                progressBarValue = 1;
+                installTypeCollection.Add(new WindowsFeature { Name = "Grant Service Account Logon As A Service rights", Result = GrantUserLogOnAsAService(txt_ServiceAcc.Text) });
+                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
+
+                //' Add new item for current windows feature installation state
+                progressBarValue = 2;
+                installTypeCollection.Add(new WindowsFeature { Name = "Install Microsoft Visual C++ Redistributable package", Result = Installvc_redi() });
+                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
+
+                //' Add new item for current windows feature installation state
+                progressBarValue = 3;
+                installTypeCollection.Add(new WindowsFeature { Name = "Install SQL Server 2012 Native Client", Result = Installsqlncli() });
+                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
+
+                //' Add new item for current windows feature installation state
+                progressBarValue = 4;
+                installTypeCollection.Add(new WindowsFeature { Name = "Install SQL Server ODBC Driver", Result = Installodbc() });
+                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
+
+
+                progressBarValue = 5;
+                installTypeCollection.Add(new WindowsFeature { Name = "Install SQL Server Command Line Utility", Result = Installsqlcmd() });
+                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
+
+            }
+            if (comboBoxInstallType.SelectedIndex == 1) // Web Only Server OPMT
+            {
+                //' Update progress bar properties
+                progressBarSiteType.Maximum = featureList.Count + 2;
+                progressBarValue = 1;
+                installTypeCollection.Add(new WindowsFeature { Name = "Grant Service Account Logon As A Service rights", Result = GrantUserLogOnAsAService(txt_ServiceAcc.Text) });
+                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
+
+            }
+
+            if (comboBoxInstallType.SelectedIndex == 4) // Transformation Sercer OPMT
+            {
+
+                //' Update progress bar properties
+                progressBarSiteType.Maximum = featureList.Count + 5;
+
+                progressBarValue = 6;
+                installTypeCollection.Add(new WindowsFeature { Name = "Grant Replace a process level token rights", Result = GrantReplaceAProcessLevelToken(txt_ServiceAcc.Text) });
+                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
+
+                progressBarValue = 7;
+                installTypeCollection.Add(new WindowsFeature { Name = "Grant Adjust Memory Quotas For A Process", Result = GrantAdjustMemoryQuotasForAProcess(txt_ServiceAcc.Text) });
+                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
+
+                progressBarValue = 8;
+                installTypeCollection.Add(new WindowsFeature { Name = "Grant Create a token object", Result = GrantCreateATokenObject(txt_ServiceAcc.Text) });
+                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
+            }
+
+            if (comboBoxInstallType.SelectedIndex == 7)
+            {
+                //' Update progress bar properties
+                progressBarSiteType.Maximum = featureList.Count + 5;
+
+                //' Add new item for current windows feature installation state
+                progressBarValue = 2;
+                installTypeCollection.Add(new WindowsFeature { Name = "Install Microsoft Visual C++ Redistributable package", Result = Installvc_redi() });
+                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
+
+                //' Add new item for current windows feature installation state
+                progressBarValue = 3;
+                installTypeCollection.Add(new WindowsFeature { Name = "Grant SQL Server 2012 Native Client", Result = Installsqlncli() });
+                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
+
+                //' Add new item for current windows feature installation state
+                progressBarValue = 4;
+                installTypeCollection.Add(new WindowsFeature { Name = "Install SQL Server ODBC Driver", Result = Installodbc() });
+                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
+
+
+                progressBarValue = 5;
+                installTypeCollection.Add(new WindowsFeature { Name = "Grant SQL Server Command Line Utility", Result = Installsqlcmd() });
+                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
+            }
+
+
+            //' Process each windows feature for installation
+            foreach (string feature in featureList)
+            {
+                if (!String.IsNullOrEmpty(feature))
+                {
+                    //' Update progress bar
+                    progressBarSiteType.Value = progressBarValue++;
+
+
+                    //' Add new item for current windows feature installation state
+                    installTypeCollection.Add(new WindowsFeature { Name = feature, Result = "Granting..." });
+                    dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
+
+
+                    //' Invoke windows feature installation via PowerShell runspace
+                    object installResult = await scriptEngine.AddWindowsFeature(feature);
+                    string featureState = installResult.ToString();
+
+                    //' Update current row on data grid
+                    if (!String.IsNullOrEmpty(featureState))
+                    {
+                        var currentCollectionItem = installTypeCollection.FirstOrDefault(winFeature => winFeature.Name == feature);
+
+                        //' Update datagrid elements
+                        currentCollectionItem.Result = featureState;
+                    }
+                }
+
+            }
+            progressBarSiteType.Value = progressBarSiteType.Maximum;
+
+            B_Install.IsEnabled = true;
+            MessageBoxResult result = MessageBox.Show("Prerequisites are applied to this system. You may want to restart the system to ensure all changes are applied. Click Yes to restart or No to cancel.", "System Restart", MessageBoxButton.YesNo);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                SystemRestart();
+            }
+        }
+
+        private void SystemRestart()
+        {
+            var cmd = new ProcessStartInfo("shutdown.exe", "-r -t 0");
+            cmd.CreateNoWindow = true;
+            cmd.UseShellExecute = false;
+            cmd.ErrorDialog = false;
+            Process.Start(cmd);
         }
 
 
@@ -313,200 +533,14 @@ namespace KTAPrerequisitesApp
                 }
                 catch (Exception ex)
                 {
-                    return "Connection failure (you can continue if you want to grant the dbcreator role at a different time): " +  ex.Message;
+                    return "Connection failure (you can continue by providing a valid service account if you want to grant the dbcreator role at a different time): " +  ex.Message;
 
                 }
             }
         }
 
 
-        async private void B_Install_Click(object sender, RoutedEventArgs e)
-        {
-            B_Install.IsEnabled = false;
-            //' Clear existing items from observable collection
-            if (dataGridInstallType.Items.Count >= 1)
-            {
-                installTypeCollection.Clear();
-            }
-
-            //' Set item source for data grids
-            dataGridInstallType.ItemsSource = installTypeCollection;
-
-
-            //' Get windows features for selected site type
-            List<string> featureList = GetWindowsFeatures(comboBoxInstallType.SelectedItem.ToString());
-
-            int progressBarValue = 0;
-
-            //0 TotalAgility WebApp server(Including OPMT)
-
-            //  1  TotalAgility Web Only(Including OPMT)
-
-            //    2  TotalAgility APP Only(Including OPMT)
-
-            //     3   TotalAgility Transformation Server
-
-            //        4    TotalAgility Transformation Server(OPMT)
-
-            //         5     TotalAgility Intergration Server
-
-            //          6   TotalAgility RTTS 
-
-            //            7    TotalAgility DB Only
-
-
-            if (comboBoxInstallType.SelectedIndex == 0 || comboBoxInstallType.SelectedIndex == 2 || comboBoxInstallType.SelectedIndex == 3 || comboBoxInstallType.SelectedIndex == 4 || comboBoxInstallType.SelectedIndex == 5 || comboBoxInstallType.SelectedIndex == 6) 
-            {
-
-                
-                string dbcreatorResult;
-                if (cb_WinAuth.IsChecked == true)
-                {
-                    dbcreatorResult = CheckSqlServerUserAccount(txt_ServiceAcc.Text, txt_sqlpassword.Text, txt_sqlserver.Text, true);
-
-                }
-                else
-                {
-                    dbcreatorResult = CheckSqlServerUserAccount(txt_SQLuser.Text, txt_sqlpassword.Text, txt_sqlserver.Text, false);
-                }
-
-                progressBarValue = 1;
-                installTypeCollection.Add(new WindowsFeature { Name = "Grant SQL dbcreator role", Result = dbcreatorResult });
-                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
-
-
-                //' Update progress bar properties
-                progressBarSiteType.Maximum = featureList.Count + 6;
-                
-                progressBarValue = 1;
-                installTypeCollection.Add(new WindowsFeature { Name = "Grant Service Account Logon As A Service rights", Result = GrantUserLogOnAsAService(txt_ServiceAcc.Text) });
-                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
-
-                //' Add new item for current windows feature installation state
-                progressBarValue = 2;
-                installTypeCollection.Add(new WindowsFeature { Name = "Install Microsoft Visual C++ Redistributable package", Result = Installvc_redi() });
-                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
-
-                //' Add new item for current windows feature installation state
-                progressBarValue = 3;
-                installTypeCollection.Add(new WindowsFeature { Name = "Install SQL Server 2012 Native Client", Result = Installsqlncli() });
-                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
-
-                //' Add new item for current windows feature installation state
-                progressBarValue = 4;
-                installTypeCollection.Add(new WindowsFeature { Name = "Install SQL Server ODBC Driver", Result = Installodbc() });
-                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
-
-
-                progressBarValue = 5;
-                installTypeCollection.Add(new WindowsFeature { Name = "Install SQL Server Command Line Utility", Result = Installsqlcmd() });
-                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
-
-            }
-            if (comboBoxInstallType.SelectedIndex == 1) // Web Only Server OPMT
-            {
-                //' Update progress bar properties
-                progressBarSiteType.Maximum = featureList.Count + 2;
-                progressBarValue = 1;
-                installTypeCollection.Add(new WindowsFeature { Name = "Grant Service Account Logon As A Service rights", Result = GrantUserLogOnAsAService(txt_ServiceAcc.Text) });
-                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
-
-            }
-
-            if (comboBoxInstallType.SelectedIndex == 4) // Transformation Sercer OPMT
-            {
-
-                //' Update progress bar properties
-                progressBarSiteType.Maximum = featureList.Count + 5;
-
-                progressBarValue = 6;
-                installTypeCollection.Add(new WindowsFeature { Name = "Grant Replace a process level token rights", Result = GrantReplaceAProcessLevelToken(txt_ServiceAcc.Text) });
-                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
-
-                progressBarValue = 7;
-                installTypeCollection.Add(new WindowsFeature { Name = "Grant Adjust Memory Quotas For A Process", Result = GrantAdjustMemoryQuotasForAProcess(txt_ServiceAcc.Text) });
-                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
-
-                progressBarValue = 8;
-                installTypeCollection.Add(new WindowsFeature { Name = "Grant Create a token object", Result = GrantCreateATokenObject(txt_ServiceAcc.Text) });
-                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
-            }
-
-            if (comboBoxInstallType.SelectedIndex == 7)
-            {
-                //' Update progress bar properties
-                progressBarSiteType.Maximum = featureList.Count + 5;
-
-                //' Add new item for current windows feature installation state
-                progressBarValue = 2;
-                installTypeCollection.Add(new WindowsFeature { Name = "Install Microsoft Visual C++ Redistributable package", Result = Installvc_redi() });
-                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
-
-                //' Add new item for current windows feature installation state
-                progressBarValue = 3;
-                installTypeCollection.Add(new WindowsFeature { Name = "Grant SQL Server 2012 Native Client", Result = Installsqlncli() });
-                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
-
-                //' Add new item for current windows feature installation state
-                progressBarValue = 4;
-                installTypeCollection.Add(new WindowsFeature { Name = "Install SQL Server ODBC Driver", Result = Installodbc() });
-                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
-
-
-                progressBarValue = 5;
-                installTypeCollection.Add(new WindowsFeature { Name = "Grant SQL Server Command Line Utility", Result = Installsqlcmd() });
-                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
-            }
-
-
-            //' Process each windows feature for installation
-            foreach (string feature in featureList)
-            {
-                if (!String.IsNullOrEmpty(feature))
-                {
-                    //' Update progress bar
-                    progressBarSiteType.Value = progressBarValue++;
-                    
-
-                    //' Add new item for current windows feature installation state
-                    installTypeCollection.Add(new WindowsFeature { Name = feature, Result = "Granting..." });
-                    dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
-
-
-                    //' Invoke windows feature installation via PowerShell runspace
-                    object installResult = await scriptEngine.AddWindowsFeature(feature);
-                    string featureState = installResult.ToString();
-
-                    //' Update current row on data grid
-                    if (!String.IsNullOrEmpty(featureState))
-                    {
-                        var currentCollectionItem = installTypeCollection.FirstOrDefault(winFeature => winFeature.Name == feature);
-
-                        //' Update datagrid elements
-                        currentCollectionItem.Result = featureState;
-                    }
-                }
-
-            }
-            progressBarSiteType.Value = progressBarSiteType.Maximum;
-
-            B_Install.IsEnabled = true;
-            MessageBoxResult result = MessageBox.Show("Prerequisites are applied to this system. You may want to restart the system to ensure all changes are applied. Click Yes to restart or No to cancel.", "System Restart", MessageBoxButton.YesNo);
-            
-            if (result== MessageBoxResult.Yes)
-            {
-                SystemRestart();
-            } 
-        }
-
-        private void SystemRestart()
-        {
-            var cmd = new ProcessStartInfo("shutdown.exe", "-r -t 0");
-            cmd.CreateNoWindow = true;
-            cmd.UseShellExecute = false;
-            cmd.ErrorDialog = false;
-            Process.Start(cmd);
-        }
+       
 
 
 
@@ -591,38 +625,7 @@ namespace KTAPrerequisitesApp
                 .Any(displayName => displayName != null && displayName.Contains(softwareName));
         }
         
-        private void Window_Loaded()
-        {
-            
-            //' Check environment prerequisites
-            uint productType = GetProductType();
-            switch (productType)
-            {
-                case 0:
-                    MessageBox.Show("Unable to detect platform product type from WMI. Application will now terminate.", "UNHANDLED ERROR", MessageBoxButton.OK);
-                    Environment.Exit(0);
-                    break;
-                case 1:
-                     MessageBox.Show("Unsupported platform detected. Kofax TotalAgility supports Windows 2008 or above.", "UNSUPPORTED PLATFORM", MessageBoxButton.OK);
-                    Environment.Exit(0);
-                    break;
-                case 2:
-                    MessageBox.Show("Unsupported platform type detect. It's not recommended to run this application on a domain controller.", "WARNING", MessageBoxButton.OK);
-                    Environment.Exit(0);
-                    break;
-                
-            }
-
-            bool IsAdmin = IsInGroup(WindowsIdentity.GetCurrent().Token, "Administrators");
-            switch (IsAdmin)
-            {
-                case false:
-                    MessageBox.Show("We have detected this app is running as a user who is not a member of the local machine administrators group.", "SECURITY ISSUE", MessageBoxButton.OK);
-                    Environment.Exit(0);
-                    break;
-            }
-
-        }
+       
 
         private bool IsInGroup(IntPtr Token, string group)
         {
@@ -678,21 +681,23 @@ namespace KTAPrerequisitesApp
         return productType;
         }
 
-        private void cb_WinAuth_Checked(object sender, RoutedEventArgs e)
+        private void cb_winauth_Checked(object sender, RoutedEventArgs e)
         {
-            if (cb_WinAuth.IsChecked == true)
+            if (cb_winauth.IsChecked == true)
             {
-                txt_SQLuser.IsEnabled = false;
-                txt_sqlpassword.IsEnabled = false;
-                l_sqluser.IsEnabled = false;
-                l_sqlpassword.IsEnabled = false;
+                txt_SQLuser.Visibility = Visibility.Collapsed;
+                txt_sqlpassword.Visibility = Visibility.Collapsed;
+                l_sqlpassword.Visibility = Visibility.Collapsed;
+                l_sqluser.Visibility = Visibility.Collapsed;
+                txt_dbcreator.Visibility = Visibility.Visible;
             }
             else
             {
-                txt_SQLuser.IsEnabled = true;
-                txt_sqlpassword.IsEnabled = true;
-                l_sqluser.IsEnabled = true;
-                l_sqlpassword.IsEnabled = true;
+                txt_SQLuser.Visibility = Visibility.Visible;
+                txt_sqlpassword.Visibility = Visibility.Visible;
+                l_sqlpassword.Visibility = Visibility.Visible;
+                l_sqluser.Visibility = Visibility.Visible;
+                txt_dbcreator.Visibility = Visibility.Collapsed;
             }
         }
 
@@ -706,15 +711,16 @@ namespace KTAPrerequisitesApp
                 if (!CheckUserinAD(ServiceAcc[0], ServiceAcc[1]))
                 {
 
+                        
 
                     if (!localUserExists(txt_ServiceAcc.Text))
                     {
-                        tb_message.Text = "Warning - The Service account does not exist in Active Directory or local machine.";
+                        tb_message.Text = "Failure - The service account cannot be found in Active Directory or local machine. The install button will be disabled until the account is found.";
                     }
                     else
                     {
 
-                        tb_message.Text = "Success - The service account exists in your local machine. ";
+                        tb_message.Text = "Success - The service account was found in your local machine. ";
                         B_Install.IsEnabled = true;
                     }
 
@@ -722,13 +728,31 @@ namespace KTAPrerequisitesApp
                 }
                 else
                 {
-                    tb_message.Text = "Success - The service account exists in Active Directory.";
+                    tb_message.Text = "Success - The service account was found in Active Directory.";
                     B_Install.IsEnabled = true;
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                tb_message.Text = "Failure - The Service account does not exist in Active Directory or locally on this machine.  The install button will be disabled until a valid user is entered.";
+                try
+                {
+                    if (!localUserExists(txt_ServiceAcc.Text))
+                    {
+                        tb_message.Text = $@"Failure - The service account cannot be found in Active Directory - Error:{ex.Message}.  Also, the account was not found in this local machine. The install button will be disabled until the account is found.";
+                    }
+                    else
+                    {
+
+                        tb_message.Text = "Success - The service account was found in your local machine. ";
+                        B_Install.IsEnabled = true;
+                    }
+                }
+                catch (Exception exc)
+                {
+                    tb_message.Text = $@"Failure - The service account cannot be found on this local machine  -Error:{exc.Message}. Also, the account was not found in Active Directory - Error:{ex.Message}. The install button will be disabled until the account is found.";
+                }
+               
+    
             }
 
 
@@ -760,8 +784,34 @@ namespace KTAPrerequisitesApp
 
         private void b_testconnection_Click(object sender, RoutedEventArgs e)
         { 
-            tb_message.Text = TestConnection(txt_ServiceAcc.Text, txt_sqlpassword.Text, txt_sqlserver.Text, cb_WinAuth.IsEnabled);
+            tb_message.Text = TestConnection(txt_ServiceAcc.Text, txt_sqlpassword.Text, txt_sqlserver.Text, cb_winauth.IsEnabled);
         
         }
+
+        private void dataGridInstallType_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+
+        }
+
+        private void cb_dbcreator_Checked(object sender, RoutedEventArgs e)
+        {
+            if (cb_dbcreator.IsChecked == true)
+            {
+                cb_winauth.Visibility = Visibility.Visible;
+                txt_dbcreator.Visibility = Visibility.Visible;
+                
+                
+
+            }
+            else
+            {
+                cb_winauth.Visibility = Visibility.Collapsed;
+                txt_dbcreator.Visibility = Visibility.Collapsed;
+               
+            }
+        }
+
+      
+       
     }
 }
