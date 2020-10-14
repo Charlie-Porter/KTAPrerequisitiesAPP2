@@ -71,6 +71,86 @@ namespace KTAPrerequisitesApp
             }
 
         }
+        /// <summary>
+        /// https://stackoverflow.com/questions/56548873/c-sharp-sql-server-add-roles-to-database-user
+        /// </summary>
+        /// <param name="usertobeadded"></param>
+        /// <param name="password"></param>
+        /// <param name="server"></param>
+        /// <param name="winauth"></param>
+        /// <returns></returns>
+        private static string CheckSqlServerUserAccount(string usertobeadded, string password, string server, bool winauth)
+        {
+            string connectionString;
+
+            if (winauth == false)
+            {
+                connectionString = $@"Data Source={server};User ID={usertobeadded};Password={password}";
+            }
+            else
+            {
+                connectionString = $@"Data Source={server};Trusted_Connection=True";
+            }
+
+
+
+            string cmdText = $@"EXEC sp_addsrvrolemember '{usertobeadded}', 'dbcreator';";
+
+            // The connection is automatically closed at the end of the using block.
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                try
+                {
+                    SqlCommand cmd = new SqlCommand(cmdText, connection);
+                    connection.Open();
+                    cmd.ExecuteNonQuery();
+                    return ($@"Granted DBCreator role to {usertobeadded}");
+                }
+                catch (Exception ex)
+                {
+                    return ex.Message;
+
+                }
+            }
+        }
+
+        private static string TestConnection(string usertobeadded, string password, string server, bool winauth)
+        {
+            string connectionString;
+
+            if (winauth == false)
+            {
+                connectionString = $@"Data Source={server};User ID={usertobeadded};Password={password}";
+            }
+            else
+            {
+                connectionString = $@"Data Source={server};Trusted_Connection=True";
+            }
+
+
+
+
+
+            // The connection is automatically closed at the end of the using block.
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                try
+                {
+
+
+                    connection.Open();
+
+
+                    return ($@"Connection successful to the SQL server");
+                }
+                catch (Exception ex)
+                {
+                    return "Connection failure (you can continue installing by providing a found account if you want to grant the dbcreator role at a different time): " + ex.Message;
+
+                }
+            }
+        }
+
         async private void B_Install_Click(object sender, RoutedEventArgs e)
         {
             B_Install.IsEnabled = false;
@@ -459,85 +539,7 @@ namespace KTAPrerequisitesApp
                 }
             }
         }
-        /// <summary>
-        /// https://stackoverflow.com/questions/56548873/c-sharp-sql-server-add-roles-to-database-user
-        /// </summary>
-        /// <param name="usertobeadded"></param>
-        /// <param name="password"></param>
-        /// <param name="server"></param>
-        /// <param name="winauth"></param>
-        /// <returns></returns>
-        private static string CheckSqlServerUserAccount(string usertobeadded, string password, string server, bool winauth )
-        {
-            string connectionString;
-
-            if (winauth == false)
-            {
-                connectionString = $@"Data Source={server};User ID={usertobeadded};Password={password}";
-            }
-            else
-            {
-                connectionString = $@"Data Source={server};Trusted_Connection=True";
-            }
-
-            
-
-            string cmdText = $@"EXEC sp_addsrvrolemember '{usertobeadded}', 'dbcreator';";
-
-            // The connection is automatically closed at the end of the using block.
-            using (SqlConnection connection = new SqlConnection(connectionString))
-            {
-                try
-                {
-                    SqlCommand cmd = new SqlCommand(cmdText, connection);
-                    connection.Open();
-                    cmd.ExecuteNonQuery();
-                    return ($@"Granted DBCreator role to {usertobeadded}");
-                }
-                catch (Exception ex)
-                {
-                    return ex.Message;
-                    
-                }
-            }
-        }
-
-        private static string TestConnection(string usertobeadded, string password, string server, bool winauth)
-        {
-            string connectionString;
-
-            if (winauth == false)
-            {
-                connectionString = $@"Data Source={server};User ID={usertobeadded};Password={password}";
-            }
-            else
-            {
-                connectionString = $@"Data Source={server};Trusted_Connection=True";
-            }
-
-
-
-           
-
-            // The connection is automatically closed at the end of the using block.
-            using (SqlConnection connection = new SqlConnection(connectionString))
-            {
-                try
-                {
-                 
-
-                    connection.Open();
-                    
-                   
-                    return ($@"Connection successful");
-                }
-                catch (Exception ex)
-                {
-                    return "Connection failure (you can continue by providing a valid service account if you want to grant the dbcreator role at a different time): " +  ex.Message;
-
-                }
-            }
-        }
+       
 
 
        
@@ -690,6 +692,8 @@ namespace KTAPrerequisitesApp
                 l_sqlpassword.Visibility = Visibility.Collapsed;
                 l_sqluser.Visibility = Visibility.Collapsed;
                 txt_dbcreator.Visibility = Visibility.Visible;
+                
+                
             }
             else
             {
@@ -716,6 +720,7 @@ namespace KTAPrerequisitesApp
                     if (!localUserExists(txt_ServiceAcc.Text))
                     {
                         tb_message.Text = "Failure - The service account cannot be found in Active Directory or local machine. The install button will be disabled until the account is found.";
+                        B_Install.IsEnabled = false;
                     }
                     else
                     {
@@ -739,6 +744,7 @@ namespace KTAPrerequisitesApp
                     if (!localUserExists(txt_ServiceAcc.Text))
                     {
                         tb_message.Text = $@"Failure - The service account cannot be found in Active Directory - Error:{ex.Message}.  Also, the account was not found in this local machine. The install button will be disabled until the account is found.";
+                        B_Install.IsEnabled = false;
                     }
                     else
                     {
@@ -750,6 +756,7 @@ namespace KTAPrerequisitesApp
                 catch (Exception exc)
                 {
                     tb_message.Text = $@"Failure - The service account cannot be found on this local machine  -Error:{exc.Message}. Also, the account was not found in Active Directory - Error:{ex.Message}. The install button will be disabled until the account is found.";
+                    B_Install.IsEnabled = false;
                 }
                
     
@@ -759,6 +766,69 @@ namespace KTAPrerequisitesApp
 
                 
                
+        }
+
+        private void txt_dbcreator_LostFocus(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                char[] charSeparators = new char[] { '\\' };
+                var dbcreatorAcc = txt_dbcreator.Text.Split(charSeparators);
+
+                if (!CheckUserinAD(dbcreatorAcc[0], dbcreatorAcc[1]))
+                {
+
+
+
+                    if (!localUserExists(txt_dbcreator.Text))
+                    {
+                        tb_message.Text = "Failure - The windows account for DB creation cannot be found in Active Directory or local machine. The install button will be disabled until the account is found.";
+                        B_Install.IsEnabled = false;
+                    }
+                    else
+                    {
+
+                        tb_message.Text = "Success - The windows account for DB creation was found in your local machine. ";
+                        B_Install.IsEnabled = true;
+                    }
+
+
+                }
+                else
+                {
+                    tb_message.Text = "Success - The windows account for DB creation was found in Active Directory.";
+                    B_Install.IsEnabled = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                try
+                {
+                    if (!localUserExists(txt_dbcreator.Text))
+                    {
+                        tb_message.Text = $@"Failure - The windows account for DB creation was found in Active Directory - Error:{ex.Message}.  Also, the account was not found in this local machine. The install button will be disabled until the account is found.";
+                        B_Install.IsEnabled = false;
+                    }
+                    else
+                    {
+
+                        tb_message.Text = "Success - The windows account for DB creation was found was found in your local machine. ";
+                        B_Install.IsEnabled = true;
+                    }
+                }
+                catch (Exception exc)
+                {
+                    tb_message.Text = $@"Failure - The windows account for DB creation was found on this local machine  -Error:{exc.Message}. Also, the account was not found in Active Directory - Error:{ex.Message}. The install button will be disabled until the account is found.";
+                    B_Install.IsEnabled = false;
+                }
+
+
+            }
+
+
+
+
+
         }
 
         static bool localUserExists(string User)
@@ -784,7 +854,17 @@ namespace KTAPrerequisitesApp
 
         private void b_testconnection_Click(object sender, RoutedEventArgs e)
         { 
-            tb_message.Text = TestConnection(txt_ServiceAcc.Text, txt_sqlpassword.Text, txt_sqlserver.Text, cb_winauth.IsEnabled);
+            if (cb_dbcreator.IsChecked == true)
+            {
+
+                tb_message.Text = TestConnection(txt_dbcreator.Text, txt_sqlpassword.Text, txt_sqlserver.Text, cb_winauth.IsEnabled);
+            }
+            else
+            {
+                tb_message.Text = TestConnection(txt_ServiceAcc.Text, txt_sqlpassword.Text, txt_sqlserver.Text, cb_winauth.IsEnabled);
+            }
+
+            
         
         }
 
@@ -807,7 +887,13 @@ namespace KTAPrerequisitesApp
             {
                 cb_winauth.Visibility = Visibility.Collapsed;
                 txt_dbcreator.Visibility = Visibility.Collapsed;
-               
+                txt_SQLuser.Visibility = Visibility.Collapsed;
+                txt_sqlpassword.Visibility = Visibility.Collapsed;
+                l_sqlpassword.Visibility = Visibility.Collapsed;
+                l_sqluser.Visibility = Visibility.Collapsed;
+                
+
+
             }
         }
 
