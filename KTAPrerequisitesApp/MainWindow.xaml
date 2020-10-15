@@ -5,18 +5,17 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:KTAPrerequisitesApp" xmlns:System="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
-        Title="Welcome to our KTA 7.8 prerequisites app" Height="487.333" Width="600" SizeToContent="Height"
-        Style="{DynamicResource CustomToolWindowStyle}"        >
-    <Grid Height="639" VerticalAlignment="Top">
+        Title="Tech Supports KTA 7.8 prerequisites app" Height="auto" Width="600" SizeToContent="Height"
+        Style="{DynamicResource CustomToolWindowStyle}">
+    <Grid Height="644" VerticalAlignment="Top" ScrollViewer.VerticalScrollBarVisibility="Disabled" HorizontalAlignment="Left" Width="592">
         <Grid.RowDefinitions>
-            <RowDefinition Height="53*"/>
-            <RowDefinition Height="13*"/>
-            <RowDefinition Height="174*"/>
-            <RowDefinition Height="164*"/>
+            <RowDefinition/>
+
         </Grid.RowDefinitions>
-        <DataGrid x:Name="dataGridInstallType" Visibility="Visible" HorizontalAlignment="Left" Height="192" Margin="10,35,0,0" VerticalAlignment="Top" Width="572" IsSynchronizedWithCurrentItem="False" BorderBrush="#FFC8C8C8" SelectionChanged="dataGridInstallType_SelectionChanged" Grid.Row="3"/>
-        <Button x:Name="B_Install" ToolTipService.ShowOnDisabled="True" IsEnabled="False" Content="Install" HorizontalAlignment="Left" Margin="507,10,0,0" VerticalAlignment="Top" Width="75" Click="B_Install_Click" RenderTransformOrigin="-0.809,2.717" ToolTip="To enable please enter a service account which either exists locally or in AD" Grid.Row="3"/>
-        <ComboBox x:Name="comboBoxInstallType" SelectedIndex="0" HorizontalAlignment="Left" Margin="247,26,0,0" VerticalAlignment="Top" Width="335" SelectionChanged="comboBoxInstallType_SelectionChanged">
+        <DataGrid x:Name="dataGridInstallType" Visibility="Visible" HorizontalAlignment="Left" Width="582" IsSynchronizedWithCurrentItem="False" BorderBrush="#FFC8C8C8" SelectionChanged="dataGridInstallType_SelectionChanged" RenderTransformOrigin="0.5,0.5" Margin="1,353,0,10" />
+
+        <Button x:Name="B_Install" ToolTipService.ShowOnDisabled="True" IsEnabled="False" Content="Install" HorizontalAlignment="Left" Margin="507,321,0,0" VerticalAlignment="Top" Width="75" Click="B_Install_Click" RenderTransformOrigin="-0.809,2.717" ToolTip="To enable please enter a service account which either exists locally or in AD" Height="20"/>
+        <ComboBox x:Name="comboBoxInstallType" SelectedIndex="0" HorizontalAlignment="Left" Margin="247,26,0,0" VerticalAlignment="Top" Width="335" SelectionChanged="comboBoxInstallType_SelectionChanged" Height="22">
             <System:String>TotalAgility WebApp server(Including OPMT)</System:String>
             <System:String>TotalAgility Web Only(Including OPMT)</System:String>
             <System:String>TotalAgility APP Only(Including OPMT)</System:String>
@@ -26,17 +25,17 @@
             <System:String>TotalAgility RTTS</System:String>
             <System:String>TotalAgility DB Only</System:String>
         </ComboBox>
-        <ProgressBar x:Name="progressBarSiteType" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="492" Height="20" Background="#FF252525" Grid.Row="3" />
-        <Label x:Name="label" Content="Please select the KTA install type:" HorizontalAlignment="Left" Margin="10,24,0,0" VerticalAlignment="Top"/>
-        <Label x:Name="l_ServiceAcc" Content="Please enter your service account:" HorizontalAlignment="Left" Margin="10,2,0,0" VerticalAlignment="Top" Grid.RowSpan="2" Grid.Row="1"/>
-        <TextBox x:Name="txt_ServiceAcc"   HorizontalAlignment="Left" Height="23" Margin="247,5,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="335" LostFocus="txt_ServiceAcc_LostFocus" Text="domain\account " Grid.RowSpan="2" Grid.Row="1"/>
-        <Label x:Name="l_sqlserver" Content="Microsoft SQL server instance location:" HorizontalAlignment="Left" Margin="10,33,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.413,-0.476" Grid.Row="2"/>
-        <TextBox x:Name="txt_sqlserver" HorizontalAlignment="Left" Height="23" Margin="247,33,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="335" Grid.Row="2"/>
-        <Button x:Name="b_testconnection" Content="Test Connection" HorizontalAlignment="Left" Margin="482,210,0,0" VerticalAlignment="Top" Width="100" Height="25" Click="b_testconnection_Click" Grid.Row="2"/>
-        <TextBlock x:Name="tb_message" IsEnabled="False" TextWrapping="WrapWithOverflow" HorizontalAlignment="Left" Margin="15,210,0,0" VerticalAlignment="Top" Width="467" Height="60" Grid.Row="2"><Run Text="Status:  Please enter the service account and "/><Run Text="SQL instance "/><Run Text="access details"/><Run Text="."/></TextBlock>
-        <CheckBox x:Name="cb_dbcreator" Content="Use a different account for DB creation" HorizontalAlignment="Left" Margin="10,64,0,0" VerticalAlignment="Top" Click="cb_dbcreator_Checked" Grid.Row="2"/>
+        <ProgressBar x:Name="progressBarSiteType" HorizontalAlignment="Left" Margin="10,321,0,0" VerticalAlignment="Top" Width="492" Height="20" Background="#FF252525" />
+        <Label x:Name="label" Content="Please select the KTA install type:" HorizontalAlignment="Left" Margin="10,24,0,0" VerticalAlignment="Top" Height="26" Width="215"/>
+        <Label x:Name="l_ServiceAcc" Content="Please enter your service account:" HorizontalAlignment="Left" Margin="10,50,0,0" VerticalAlignment="Top" Height="26" Width="215"/>
+        <TextBox x:Name="txt_ServiceAcc"   HorizontalAlignment="Left" Height="23" Margin="247,53,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="335" LostFocus="txt_ServiceAcc_LostFocus" Text="domain\account "/>
+        <Label x:Name="l_sqlserver" Content="Microsoft SQL server instance location:" HorizontalAlignment="Left" Margin="10,80,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.413,-0.476" Height="26" Width="215"/>
+        <TextBox x:Name="txt_sqlserver" HorizontalAlignment="Left" Height="23" Margin="247,81,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="335"/>
+        <Button x:Name="b_testconnection" Content="Test SQL Connection" HorizontalAlignment="Left" Margin="467,256,0,0" VerticalAlignment="Top" Width="115" Height="25" Click="b_testconnection_Click"/>
+        <TextBlock x:Name="tb_message" IsEnabled="False" TextWrapping="WrapWithOverflow" HorizontalAlignment="Left" Margin="10,256,0,0" VerticalAlignment="Top" Width="457" Height="60"><Run Text="User Guide"/><Run Text=":  Please enter the service account and "/><Run Text="SQL instance "/><Run Text="access details"/><Run Text="."/><Run Text=" The install button will be disabled "/><Run Text="until "/><Run Text="a service account is found locally or in Active Directory."/><Run Text="  Please note you can bypass granting DBCreator rights by leaving it blank."/></TextBlock>
+        <CheckBox x:Name="cb_dbcreator" Content="Use a different account for DB creation" HorizontalAlignment="Left" Margin="10,111,0,0" VerticalAlignment="Top" Click="cb_dbcreator_Checked" Width="225"/>
 
-        <GroupBox x:Name="groupBox" Header="Please select the authentication mode and account:" HorizontalAlignment="Left" Height="115" Margin="10,89,0,0" Grid.Row="2" VerticalAlignment="Top" Width="572" Grid.Column="0" RenderTransformOrigin="0.49,0.292">
+        <GroupBox x:Name="groupBox" Visibility="Collapsed" Header="Please select your authentication mode and enter account:" HorizontalAlignment="Left" Height="115" Margin="10,136,0,0" VerticalAlignment="Top" Width="572" Grid.Column="0" RenderTransformOrigin="0.49,0.292">
             <Grid Grid.Row="0" Column="0" Margin="0,0,0,-31">
                 <Grid.RowDefinitions>
                     <RowDefinition/>
@@ -48,14 +47,12 @@
                     <ColumnDefinition Width="75*"/>
                 </Grid.ColumnDefinitions>
 
-                <Label x:Name="l_sqluser"  Grid.Column="1" Grid.Row="0" Content="SQL User:" HorizontalAlignment="Left"  VerticalAlignment="Top" IsEnabled="False" Visibility="Visible" Height="26" Width="61"/>
-                <Label x:Name="l_sqlpassword"  Grid.Column="1" Content="SQL Password:" VerticalAlignment="Top" IsEnabled="False" Height="23" Visibility="Visible" Margin="6,34,10,0"/>
-                <TextBox x:Name="txt_sqlpassword" Grid.Column="2" Height="23" TextWrapping="Wrap" VerticalAlignment="Top" IsEnabled="true" Visibility="Visible" Margin="0,35,0,0"/>
+                <Label x:Name="l_sqluser"  Grid.Column="1" Grid.Row="0" Content="SQL User:" HorizontalAlignment="Left"  VerticalAlignment="Top" IsEnabled="False" Visibility="Collapsed" Height="26" Width="61"/>
+                <Label x:Name="l_sqlpassword"  Grid.Column="1" Content="SQL Password:" VerticalAlignment="Top" IsEnabled="False" Height="23" Visibility="Collapsed" Margin="0,29,16,0"/>
+                <TextBox x:Name="txt_sqlpassword" Grid.Column="2" Height="23" TextWrapping="Wrap" VerticalAlignment="Top" IsEnabled="true" Visibility="Collapsed" Margin="0,29,0,0"/>
+                <TextBox x:Name="txt_SQLuser" HorizontalAlignment="Left" Height="23" TextWrapping="Wrap" VerticalAlignment="Top" Width="145" IsEnabled="True"  Visibility="Collapsed" Grid.Column="2"/>
                 <CheckBox x:Name="cb_winauth" Grid.Column="0" Grid.Row="0" Content="Use Windows Authentication:" HorizontalAlignment="Left"  VerticalAlignment="Top" IsChecked="True" Click="cb_winauth_Checked"  Visibility="Visible" Width="183"/>
                 <TextBox x:Name="txt_dbcreator" Grid.Column="1" Grid.Row="0" HorizontalAlignment="Left" Height="23"  TextWrapping="Wrap" VerticalAlignment="Top" Width="292" Text="domain\account" Visibility="Visible"  LostFocus="txt_dbcreator_LostFocus" Margin="6,6,0,0" Grid.ColumnSpan="2"  />
-
-                <TextBox x:Name="txt_SQLuser" HorizontalAlignment="Left" Height="23" TextWrapping="Wrap" VerticalAlignment="Top" Width="145" IsEnabled="True"  Visibility="Visible" Grid.Column="2" Margin="5,6,0,0"/>
-
 
             </Grid>
         </GroupBox>

@@ -51,7 +51,7 @@ namespace KTAPrerequisitesApp
                     Environment.Exit(0);
                     break;
                 case 1:
-                    MessageBox.Show("Unsupported platform detected. Kofax TotalAgility supports Windows 2008 or above.", "UNSUPPORTED PLATFORM", MessageBoxButton.OK);
+                    MessageBox.Show("Unsupported platform detected. Kofax TotalAgility 7.8 supports Windows Server 2008 or above.", "UNSUPPORTED PLATFORM", MessageBoxButton.OK);
                     Environment.Exit(0);
                     break;
                 case 2:
@@ -65,7 +65,7 @@ namespace KTAPrerequisitesApp
             switch (IsAdmin)
             {
                 case false:
-                    MessageBox.Show("We have detected this app is running as a user who is not a member of the local machine administrators group.", "SECURITY ISSUE", MessageBoxButton.OK);
+                    MessageBox.Show("We have detected this app is running as a user who is not a member of the local machine administrators group. If you are a member, please launch this app with the elevated 'Run as Administrator' permission.", "SECURITY ISSUE", MessageBoxButton.OK);
                     Environment.Exit(0);
                     break;
             }
@@ -204,9 +204,11 @@ namespace KTAPrerequisitesApp
                 }
 
                 progressBarValue = 1;
-                installTypeCollection.Add(new WindowsFeature { Name = "Grant SQL dbcreator role", Result = dbcreatorResult });
-                dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
-
+                if (!string.IsNullOrEmpty(txt_sqlserver.Text))
+                {
+                    installTypeCollection.Add(new WindowsFeature { Name = "Grant SQL dbcreator role", Result = dbcreatorResult });
+                    dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
+                }
 
                 //' Update progress bar properties
                 progressBarSiteType.Maximum = featureList.Count + 6;
@@ -877,22 +879,14 @@ namespace KTAPrerequisitesApp
         {
             if (cb_dbcreator.IsChecked == true)
             {
-                cb_winauth.Visibility = Visibility.Visible;
-                txt_dbcreator.Visibility = Visibility.Visible;
-                
-                
+               
+                groupBox.Visibility = Visibility.Visible;
 
             }
             else
             {
-                cb_winauth.Visibility = Visibility.Collapsed;
-                txt_dbcreator.Visibility = Visibility.Collapsed;
-                txt_SQLuser.Visibility = Visibility.Collapsed;
-                txt_sqlpassword.Visibility = Visibility.Collapsed;
-                l_sqlpassword.Visibility = Visibility.Collapsed;
-                l_sqluser.Visibility = Visibility.Collapsed;
+                groupBox.Visibility = Visibility.Collapsed;
                 
-
 
             }
         }
