@@ -13,6 +13,8 @@ using System.Data.SqlClient;
 using System.Windows.Media.Imaging;
 using System.Security.Principal;
 using System.DirectoryServices.AccountManagement;
+using System.ComponentModel;
+
 
 namespace KTAPrerequisitesApp
 {
@@ -29,14 +31,36 @@ namespace KTAPrerequisitesApp
         //' Construct observable collections as datagrids item source
         private ObservableCollection<WindowsFeature> installTypeCollection = new ObservableCollection<WindowsFeature>();
 
+        BackgroundWorker worker;
 
-      
+
         public MainWindow()
         {
             Window_Loaded();
             InitializeComponent();
             Uri iconUri = new Uri("pack://application:,,,/Resources/kofaxlogo.png", UriKind.RelativeOrAbsolute);
             this.Icon = BitmapFrame.Create(iconUri);
+
+        }
+
+        private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
+        {
+            BackgroundWorker worker = sender as BackgroundWorker;
+
+            for (int i = 1; i <= 10; i++)
+            {
+                if (worker.CancellationPending == true)
+                {
+                    e.Cancel = true;
+                    break;
+                }
+                else
+                {
+                    // Perform a time consuming operation and report progress.
+                    System.Threading.Thread.Sleep(500);
+                    worker.ReportProgress(i * 10);
+                }
+            }
         }
 
         private void Window_Loaded()
@@ -351,11 +375,11 @@ namespace KTAPrerequisitesApp
             switch (selection)
             {
                 case "TotalAgility WebApp server(Including OPMT)":
-                    string[] WebApp = new string[] { "Web-Mgmt-Console", "NET-Framework-Features",  "Web-Windows-Auth","Web-Asp-Net45","Web-Static-Content","NET-Framework-Core","NET-WCF-HTTP-Activation45", };
+                    string[] WebApp = new string[] { "Web-Mgmt-Console", "NET-Framework-Features", "Web-Windows-Auth", "Web-Asp-Net45", "Web-Static-Content", "NET-Framework-Core", "NET-WCF-HTTP-Activation45", };
                     featureList.AddRange(WebApp);
                     break;
-                    case "TotalAgility Web Only(Including OPMT)":
-                    string[] Web = new string[] { "Web-Mgmt-Console", "NET-Framework-Features",  "Web-Windows-Auth","Web-Asp-Net45","Web-Static-Content","NET-Framework-Core","NET-WCF-HTTP-Activation45", };
+                case "TotalAgility Web Only(Including OPMT)":
+                    string[] Web = new string[] { "Web-Mgmt-Console", "NET-Framework-Features", "Web-Windows-Auth", "Web-Asp-Net45", "Web-Static-Content", "NET-Framework-Core", "NET-WCF-HTTP-Activation45", };
                     featureList.AddRange(Web);
                     break;
                 case "TotalAgility APP Only(Including OPMT)":
@@ -366,19 +390,19 @@ namespace KTAPrerequisitesApp
                     string[] TS = new string[] { "" };
                     featureList.AddRange(TS);
                     break;
-                    case "TotalAgility Transformation Server(OPMT)":
+                case "TotalAgility Transformation Server(OPMT)":
                     string[] TSOPMT = new string[] { "", };
                     featureList.AddRange(TSOPMT);
                     break;
-                    case "TotalAgility Intergration Server":
-                    string[] IS = new string[] { "Web-Mgmt-Console","NET-Framework-Features",  "Web-Windows-Auth","Web-Asp-Net45","Web-Static-Content","NET-Framework-Core","NET-WCF-HTTP-Activation45", };
+                case "TotalAgility Intergration Server":
+                    string[] IS = new string[] { "Web-Mgmt-Console", "NET-Framework-Features", "Web-Windows-Auth", "Web-Asp-Net45", "Web-Static-Content", "NET-Framework-Core", "NET-WCF-HTTP-Activation45", };
                     featureList.AddRange(IS);
                     break;
-                    case "TotalAgility RTTS":
-                    string[] RTTS = new string[] { "Web-Mgmt-Console", "NET-Framework-Features", "Web-Windows-Auth","Web-Asp-Net45","Web-Static-Content","NET-Framework-Core","NET-WCF-HTTP-Activation45", };
+                case "TotalAgility RTTS":
+                    string[] RTTS = new string[] { "Web-Mgmt-Console", "NET-Framework-Features", "Web-Windows-Auth", "Web-Asp-Net45", "Web-Static-Content", "NET-Framework-Core", "NET-WCF-HTTP-Activation45", };
                     featureList.AddRange(RTTS);
                     break;
-                    case "TotalAgility DB Only":
+                case "TotalAgility DB Only":
                     string[] DB = new string[] { "", };
                     featureList.AddRange(DB);
                     break;
@@ -402,7 +426,7 @@ namespace KTAPrerequisitesApp
                 {
 
                     string path = Directory.GetCurrentDirectory() + $@"\sqlncli.msi";
-                   
+
                     using (Process myProcess = new Process())
                     {
 
@@ -541,10 +565,10 @@ namespace KTAPrerequisitesApp
                 }
             }
         }
-       
 
 
-       
+
+
 
 
 
@@ -558,7 +582,7 @@ namespace KTAPrerequisitesApp
             }
             catch (Exception ex)
             {
-                return(ex.Message);
+                return (ex.Message);
             }
         }
 
@@ -628,8 +652,8 @@ namespace KTAPrerequisitesApp
                 .Select(subkey => subkey.GetValue("DisplayName") as string)
                 .Any(displayName => displayName != null && displayName.Contains(softwareName));
         }
-        
-       
+
+
 
         private bool IsInGroup(IntPtr Token, string group)
         {
@@ -682,7 +706,7 @@ namespace KTAPrerequisitesApp
                     productType = (uint)managementObject.GetPropertyValue("ProductType");
                 }
             }
-        return productType;
+            return productType;
         }
 
         private void cb_winauth_Checked(object sender, RoutedEventArgs e)
@@ -694,8 +718,8 @@ namespace KTAPrerequisitesApp
                 l_sqlpassword.Visibility = Visibility.Collapsed;
                 l_sqluser.Visibility = Visibility.Collapsed;
                 txt_dbcreator.Visibility = Visibility.Visible;
-                
-                
+
+
             }
             else
             {
@@ -707,71 +731,12 @@ namespace KTAPrerequisitesApp
             }
         }
 
-        private void txt_ServiceAcc_LostFocus(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                char[] charSeparators = new char[] { '\\' };
-                var ServiceAcc = txt_ServiceAcc.Text.Split(charSeparators);
 
-                if (!CheckUserinAD(ServiceAcc[0], ServiceAcc[1]))
-                {
-
-                        
-
-                    if (!localUserExists(txt_ServiceAcc.Text))
-                    {
-                        tb_message.Text = "Failure - The service account cannot be found in Active Directory or local machine. The install button will be disabled until the account is found.";
-                        B_Install.IsEnabled = false;
-                    }
-                    else
-                    {
-
-                        tb_message.Text = "Success - The service account was found in your local machine. ";
-                        B_Install.IsEnabled = true;
-                    }
-
-
-                }
-                else
-                {
-                    tb_message.Text = "Success - The service account was found in Active Directory.";
-                    B_Install.IsEnabled = true;
-                }
-            }
-            catch (Exception ex)
-            {
-                try
-                {
-                    if (!localUserExists(txt_ServiceAcc.Text))
-                    {
-                        tb_message.Text = $@"Failure - The service account cannot be found in Active Directory - Error:{ex.Message}.  Also, the account was not found in this local machine. The install button will be disabled until the account is found.";
-                        B_Install.IsEnabled = false;
-                    }
-                    else
-                    {
-
-                        tb_message.Text = "Success - The service account was found in your local machine. ";
-                        B_Install.IsEnabled = true;
-                    }
-                }
-                catch (Exception exc)
-                {
-                    tb_message.Text = $@"Failure - The service account cannot be found on this local machine  -Error:{exc.Message}. Also, the account was not found in Active Directory - Error:{ex.Message}. The install button will be disabled until the account is found.";
-                    B_Install.IsEnabled = false;
-                }
-               
-    
-            }
-
-
-
-                
-               
-        }
 
         private void txt_dbcreator_LostFocus(object sender, RoutedEventArgs e)
         {
+            MessageBox.Show("Please click ok to to start validatingion of the account");
+
             try
             {
                 char[] charSeparators = new char[] { '\\' };
@@ -845,17 +810,13 @@ namespace KTAPrerequisitesApp
                 bool UserExists = (up != null);
                 return UserExists;
             }
-            
+
         }
 
-        private void txt_sqlserver_LostFocus(object sender, RoutedEventArgs e)
-        {
-            
-           
-        }
+        
 
         private void b_testconnection_Click(object sender, RoutedEventArgs e)
-        { 
+        {
             if (cb_dbcreator.IsChecked == true)
             {
 
@@ -866,8 +827,8 @@ namespace KTAPrerequisitesApp
                 tb_message.Text = TestConnection(txt_ServiceAcc.Text, txt_sqlpassword.Text, txt_sqlserver.Text, cb_winauth.IsEnabled);
             }
 
-            
-        
+
+
         }
 
         private void dataGridInstallType_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -879,19 +840,170 @@ namespace KTAPrerequisitesApp
         {
             if (cb_dbcreator.IsChecked == true)
             {
-               
+
                 groupBox.Visibility = Visibility.Visible;
 
             }
             else
             {
                 groupBox.Visibility = Visibility.Collapsed;
-                
+
 
             }
         }
+        /// <summary>
+        /// http://dotnetpattern.com/wpf-backgroundworker
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void txt_testAcc_Click(object sender, RoutedEventArgs e)
+        {
+            txt_testAcc.IsEnabled = false;
 
-      
-       
+            worker = new BackgroundWorker();
+            worker.DoWork += worker_DoWork;
+            worker.ProgressChanged += worker_ProgressChanged;
+            worker.RunWorkerCompleted += worker_RunWorkerCompleted;
+            worker.WorkerReportsProgress = true;
+            worker.WorkerSupportsCancellation = true;
+            progressBarSiteType.Minimum = 1;
+            progressBarSiteType.Maximum = 100;
+            worker.RunWorkerAsync(txt_ServiceAcc.Text);
+
+        }
+        private void worker_DoWork(object sender, DoWorkEventArgs e)
+        {
+            BackgroundWorker worker = sender as BackgroundWorker;
+            worker.ReportProgress(10);
+            char[] charSeparators = new char[] { '\\' };
+            string serviceaccount = e.Argument.ToString();
+            var AccSplit = serviceaccount.Split(charSeparators);
+
+            try
+            {
+
+                worker.ReportProgress(20);
+                if (!CheckUserinAD(AccSplit[0], AccSplit[1]))
+                {
+
+                    tb_message.Dispatcher.Invoke(new Action(delegate ()
+                    {
+                        tb_message.Text = "TEST - The service account cannot be found in Active Directory or local machine. The install button will be disabled until the account is found.";
+                    }));
+
+
+                    worker.ReportProgress(50);
+                    if (!localUserExists(txt_ServiceAcc.Text))
+                    {
+                        tb_message.Dispatcher.Invoke(new Action(delegate ()
+                        {
+                            tb_message.Text = "Failure - The service account cannot be found in Active Directory or local machine. The install button will be disabled until the account is found."; 
+                        }));
+
+
+                        B_Install.Dispatcher.Invoke(new Action(delegate ()
+                        {
+                            B_Install.IsEnabled = false;
+                        }));
+
+                        worker.ReportProgress(100);
+                    }
+                    else
+                    {
+                        tb_message.Dispatcher.Invoke(new Action(delegate ()
+                        {
+                            tb_message.Text = "Success - The service account was found in your local machine. ";
+                        }));
+                        
+                        B_Install.Dispatcher.Invoke(new Action(delegate ()
+                        {
+                            B_Install.IsEnabled = true;
+                        }));
+                        worker.ReportProgress(100);
+
+                    }
+
+
+                }
+                else
+                {
+                    tb_message.Dispatcher.Invoke(new Action(delegate ()
+                    {
+                        tb_message.Text = "Success - The service account was found in Active Directory.";
+                    }));
+                    B_Install.Dispatcher.Invoke(new Action(delegate ()
+                    {
+                        B_Install.IsEnabled = true;
+                    }));
+                    worker.ReportProgress(100);
+                }
+            }
+            catch (Exception ex)
+            {
+                try
+                {
+                    if (!localUserExists(txt_ServiceAcc.Text))
+                    {
+                        tb_message.Dispatcher.Invoke(new Action(delegate ()
+                        {
+                            tb_message.Text = $@"Failure - The service account cannot be found in Active Directory - Error:{ex.Message}.  Also, the account was not found in this local machine. The install button will be disabled until the account is found.";
+                        }));
+                        B_Install.Dispatcher.Invoke(new Action(delegate ()
+                        {
+                            B_Install.IsEnabled = false;
+                        }));
+                        worker.ReportProgress(100);
+                    }
+                    else
+                    {
+                        tb_message.Dispatcher.Invoke(new Action(delegate ()
+                        {
+                            tb_message.Text = $@"Success - The service account was found in your local machine. ";
+                        }));
+
+                        B_Install.Dispatcher.Invoke(new Action(delegate ()
+                        {
+                            B_Install.IsEnabled = true;
+                        }));
+                        worker.ReportProgress(100);
+                    }
+                }
+                catch (Exception exc)
+                {
+
+                    tb_message.Dispatcher.Invoke(new Action(delegate ()
+                    {
+                        tb_message.Text = $@"Failure - The service account cannot be found on this local machine - Error: {exc.Message}. Also, the account was not found in Active Directory - Error:{ex.Message}. The install button will be disabled until the account is found.";
+                    }));
+
+                    B_Install.Dispatcher.Invoke(new Action(delegate ()
+                    {
+                        B_Install.IsEnabled = false;
+                    }));
+                    worker.ReportProgress(100);
+
+
+                }
+
+
+            }
+
+        }
+        void worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+
+            txt_testAcc.IsEnabled = true;
+
+        }
+        void worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            double percent = (e.ProgressPercentage * 100) / 50;
+
+            progressBarSiteType.Value = Math.Round(percent, 0);
+
+
+
+        }
+
     }
 }

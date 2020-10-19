@@ -28,11 +28,11 @@
         <ProgressBar x:Name="progressBarSiteType" HorizontalAlignment="Left" Margin="10,321,0,0" VerticalAlignment="Top" Width="492" Height="20" Background="#FF252525" />
         <Label x:Name="label" Content="Please select the KTA install type:" HorizontalAlignment="Left" Margin="10,24,0,0" VerticalAlignment="Top" Height="26" Width="215"/>
         <Label x:Name="l_ServiceAcc" Content="Please enter your service account:" HorizontalAlignment="Left" Margin="10,50,0,0" VerticalAlignment="Top" Height="26" Width="215"/>
-        <TextBox x:Name="txt_ServiceAcc"   HorizontalAlignment="Left" Height="23" Margin="247,53,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="335" LostFocus="txt_ServiceAcc_LostFocus" Text="domain\account "/>
+        <TextBox x:Name="txt_ServiceAcc"   HorizontalAlignment="Left" Height="23" Margin="247,53,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="255" Text="domain\account "/>
         <Label x:Name="l_sqlserver" Content="Microsoft SQL server instance location:" HorizontalAlignment="Left" Margin="10,80,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.413,-0.476" Height="26" Width="215"/>
-        <TextBox x:Name="txt_sqlserver" HorizontalAlignment="Left" Height="23" Margin="247,81,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="335"/>
-        <Button x:Name="b_testconnection" Content="Test SQL Connection" HorizontalAlignment="Left" Margin="467,256,0,0" VerticalAlignment="Top" Width="115" Height="25" Click="b_testconnection_Click"/>
-        <TextBlock x:Name="tb_message" IsEnabled="False" TextWrapping="WrapWithOverflow" HorizontalAlignment="Left" Margin="10,256,0,0" VerticalAlignment="Top" Width="457" Height="60"><Run Text="User Guide"/><Run Text=":  Please enter the service account and "/><Run Text="SQL instance "/><Run Text="access details"/><Run Text="."/><Run Text=" The install button will be disabled "/><Run Text="until "/><Run Text="a service account is found locally or in Active Directory."/><Run Text="  Please note you can bypass granting DBCreator rights by leaving it blank."/></TextBlock>
+        <TextBox x:Name="txt_sqlserver" HorizontalAlignment="Left" Height="23" Margin="247,81,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="255"/>
+        <Button x:Name="b_testconnection" Content="Test" HorizontalAlignment="Left" Margin="508,81,0,0" VerticalAlignment="Top" Width="75" Height="23" Click="b_testconnection_Click"/>
+        <TextBlock x:Name="tb_message" IsEnabled="False" TextWrapping="WrapWithOverflow" HorizontalAlignment="Left" Margin="10,244,0,0" VerticalAlignment="Top" Width="457" Height="72"><Run Text="User Guide"/><Run Text=":  Please enter the service account and "/><Run Text="SQL instance "/><Run Text="access details"/><Run Text="."/><Run Text=" The install button will be disabled "/><Run Text="until "/><Run Text="a service account is found locally or in Active Directory."/><Run Text="  Please note you can bypass granting DBCreator rights by leaving"/><Run Text=" the"/><Run Text=" "/><Run Text="SQL server location "/><Run Text="blank."/></TextBlock>
         <CheckBox x:Name="cb_dbcreator" Content="Use a different account for DB creation" HorizontalAlignment="Left" Margin="10,111,0,0" VerticalAlignment="Top" Click="cb_dbcreator_Checked" Width="225"/>
 
         <GroupBox x:Name="groupBox" Visibility="Collapsed" Header="Please select your authentication mode and enter account:" HorizontalAlignment="Left" Height="115" Margin="10,136,0,0" VerticalAlignment="Top" Width="572" Grid.Column="0" RenderTransformOrigin="0.49,0.292">
@@ -56,5 +56,6 @@
 
             </Grid>
         </GroupBox>
+        <Button x:Name="txt_testAcc" Content="Test" HorizontalAlignment="Left" Margin="508,53,0,0" VerticalAlignment="Top" Width="75" Height="23" Click="txt_testAcc_Click"/>
     </Grid>
 </Window>
