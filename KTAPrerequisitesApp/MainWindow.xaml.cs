@@ -27,12 +27,12 @@ namespace KTAPrerequisitesApp
     {
         //' Construct new class objects
         ScriptEngine scriptEngine = new ScriptEngine();
-
+        
         //' Construct observable collections as datagrids item source
         private ObservableCollection<WindowsFeature> installTypeCollection = new ObservableCollection<WindowsFeature>();
 
-        BackgroundWorker worker;
 
+        
 
         public MainWindow()
         {
@@ -41,27 +41,10 @@ namespace KTAPrerequisitesApp
             Uri iconUri = new Uri("pack://application:,,,/Resources/kofaxlogo.png", UriKind.RelativeOrAbsolute);
             this.Icon = BitmapFrame.Create(iconUri);
 
+            
+
         }
 
-        private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
-        {
-            BackgroundWorker worker = sender as BackgroundWorker;
-
-            for (int i = 1; i <= 10; i++)
-            {
-                if (worker.CancellationPending == true)
-                {
-                    e.Cancel = true;
-                    break;
-                }
-                else
-                {
-                    // Perform a time consuming operation and report progress.
-                    System.Threading.Thread.Sleep(500);
-                    worker.ReportProgress(i * 10);
-                }
-            }
-        }
 
         private void Window_Loaded()
         {
@@ -144,11 +127,11 @@ namespace KTAPrerequisitesApp
 
             if (winauth == false)
             {
-                connectionString = $@"Data Source={server};User ID={usertobeadded};Password={password}";
+                connectionString = $@"Data Source={server};User ID={usertobeadded};Password={password};Connection Timeout=3";
             }
             else
             {
-                connectionString = $@"Data Source={server};Trusted_Connection=True";
+                connectionString = $@"Data Source={server};Trusted_Connection=True;Connection Timeout=3";
             }
 
 
@@ -161,15 +144,15 @@ namespace KTAPrerequisitesApp
                 try
                 {
 
-
+                    
                     connection.Open();
 
 
-                    return ($@"Connection successful to the SQL server");
+                    return ($@"The SQL server connection was successful");
                 }
                 catch (Exception ex)
                 {
-                    return "Connection failure (you can continue installing by providing a found account if you want to grant the dbcreator role at a different time): " + ex.Message;
+                    return "The SQL server connection failed: (you can continue installing by providing a account if you do not want to grant the dbcreator role now): " + ex.Message;
 
                 }
             }
@@ -177,9 +160,12 @@ namespace KTAPrerequisitesApp
 
         async private void B_Install_Click(object sender, RoutedEventArgs e)
         {
-            B_Install.IsEnabled = false;
+            //tb_message.Text = "";
+            //B_Install.IsEnabled = false;           
+            //b_testconnection.IsEnabled = false;
+            //b_testAcc.IsEnabled = false;
+            //progressBarSiteType.Visibility = Visibility.Visible;
 
-            dataGridInstallType.Visibility = Visibility.Visible;
             //' Clear existing items from observable collection
             if (dataGridInstallType.Items.Count >= 1)
             {
@@ -669,7 +655,7 @@ namespace KTAPrerequisitesApp
         /// <param name="domain"></param>
         /// <param name="username"></param>
         /// <returns></returns>
-        public static bool CheckUserinAD(string domain, string username)
+        private static bool CheckUserinAD(string domain, string username)
         {
             using (var domainContext = new PrincipalContext(ContextType.Domain, domain))
             {
@@ -817,16 +803,75 @@ namespace KTAPrerequisitesApp
 
         private void b_testconnection_Click(object sender, RoutedEventArgs e)
         {
+            BackgroundWorker worker = new BackgroundWorker();
+            worker.DoWork += new DoWorkEventHandler(worker_DoWork_b_testconnection_Click);
+            worker.ProgressChanged += worker_ProgressChanged;
+            worker.RunWorkerCompleted += worker_RunWorkerCompleted;
+            worker.WorkerReportsProgress = true;
+            worker.WorkerSupportsCancellation = true;
+            progressBarSiteType.Minimum = 1;
+            progressBarSiteType.Maximum = 100;
+            
+
             if (cb_dbcreator.IsChecked == true)
             {
+                object[] HostVars = new object[] { txt_dbcreator.Text, txt_sqlpassword.Text, txt_sqlserver.Text, cb_winauth.IsEnabled };
 
-                tb_message.Text = TestConnection(txt_dbcreator.Text, txt_sqlpassword.Text, txt_sqlserver.Text, cb_winauth.IsEnabled);
+                
+                if (!worker.IsBusy)
+                {
+                    worker.RunWorkerAsync(HostVars);
+                }
+
             }
             else
             {
-                tb_message.Text = TestConnection(txt_ServiceAcc.Text, txt_sqlpassword.Text, txt_sqlserver.Text, cb_winauth.IsEnabled);
+                object[] HostVars = new object[] { txt_ServiceAcc.Text, txt_sqlpassword.Text, txt_sqlserver.Text, cb_winauth.IsEnabled };
+
+                worker.DoWork += new DoWorkEventHandler(worker_DoWork_b_testconnection_Click);
+                if (!worker.IsBusy)
+                {
+                    worker.RunWorkerAsync(HostVars);
+                }
+
+                
+            
             }
 
+
+        }
+
+        private void worker_DoWork_b_testconnection_Click(object sender, DoWorkEventArgs e)
+        {
+           
+            BackgroundWorker worker = sender as BackgroundWorker;
+            worker.ReportProgress(10);
+
+            object[] hostvars = e.Argument as object[];
+            var dbcreator = hostvars.GetValue(0);
+            var sqlpassword = hostvars.GetValue(1);
+            var sqlserver = hostvars.GetValue(2);
+            var winauth = hostvars.GetValue(3);
+            worker.ReportProgress(20);
+
+          
+            try
+            {
+                tb_message.Dispatcher.Invoke(new Action(delegate ()
+                {
+                    tb_message.Text = TestConnection(dbcreator.ToString(), sqlpassword.ToString(), sqlserver.ToString(), Convert.ToBoolean(winauth));
+                    worker.ReportProgress(100);
+                }));
+            }
+            catch (Exception ex)
+            {
+                tb_message.Dispatcher.Invoke(new Action(delegate ()
+                {
+                    tb_message.Text = $@"Failure - The test was unsucessful: {ex.Message}";
+                }));
+            }
+
+            
 
 
         }
@@ -838,15 +883,20 @@ namespace KTAPrerequisitesApp
 
         private void cb_dbcreator_Checked(object sender, RoutedEventArgs e)
         {
+            
+            
             if (cb_dbcreator.IsChecked == true)
             {
 
-                groupBox.Visibility = Visibility.Visible;
+                groupBox.IsEnabled = true;
+
+                
 
             }
             else
             {
-                groupBox.Visibility = Visibility.Collapsed;
+                groupBox.IsEnabled = false;
+                
 
 
             }
@@ -856,22 +906,26 @@ namespace KTAPrerequisitesApp
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void txt_testAcc_Click(object sender, RoutedEventArgs e)
+        private void b_testAcc_Click(object sender, RoutedEventArgs e)
         {
-            txt_testAcc.IsEnabled = false;
-
-            worker = new BackgroundWorker();
-            worker.DoWork += worker_DoWork;
+            BackgroundWorker worker = new BackgroundWorker();
+            worker.DoWork += new DoWorkEventHandler(worker_DoWork_b_testAcc_Click);
             worker.ProgressChanged += worker_ProgressChanged;
             worker.RunWorkerCompleted += worker_RunWorkerCompleted;
             worker.WorkerReportsProgress = true;
             worker.WorkerSupportsCancellation = true;
             progressBarSiteType.Minimum = 1;
             progressBarSiteType.Maximum = 100;
-            worker.RunWorkerAsync(txt_ServiceAcc.Text);
+
+        
+            if (!worker.IsBusy)
+            {
+                worker.RunWorkerAsync(txt_ServiceAcc.Text);
+            }
+            
 
         }
-        private void worker_DoWork(object sender, DoWorkEventArgs e)
+        private void worker_DoWork_b_testAcc_Click(object sender, DoWorkEventArgs e)
         {
             BackgroundWorker worker = sender as BackgroundWorker;
             worker.ReportProgress(10);
@@ -879,6 +933,7 @@ namespace KTAPrerequisitesApp
             string serviceaccount = e.Argument.ToString();
             var AccSplit = serviceaccount.Split(charSeparators);
 
+           
             try
             {
 
@@ -886,14 +941,10 @@ namespace KTAPrerequisitesApp
                 if (!CheckUserinAD(AccSplit[0], AccSplit[1]))
                 {
 
-                    tb_message.Dispatcher.Invoke(new Action(delegate ()
-                    {
-                        tb_message.Text = "TEST - The service account cannot be found in Active Directory or local machine. The install button will be disabled until the account is found.";
-                    }));
-
+                   
 
                     worker.ReportProgress(50);
-                    if (!localUserExists(txt_ServiceAcc.Text))
+                    if (!localUserExists(serviceaccount))
                     {
                         tb_message.Dispatcher.Invoke(new Action(delegate ()
                         {
@@ -942,7 +993,7 @@ namespace KTAPrerequisitesApp
             {
                 try
                 {
-                    if (!localUserExists(txt_ServiceAcc.Text))
+                    if (!localUserExists(serviceaccount))
                     {
                         tb_message.Dispatcher.Invoke(new Action(delegate ()
                         {
@@ -992,7 +1043,10 @@ namespace KTAPrerequisitesApp
         void worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
 
-            txt_testAcc.IsEnabled = true;
+            b_testAcc.IsEnabled = true;
+            b_testconnection.IsEnabled = true;
+            progressBarSiteType.Visibility = Visibility.Hidden;
+            tb_progressbar.Text = "";
 
         }
         void worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
@@ -1000,6 +1054,18 @@ namespace KTAPrerequisitesApp
             double percent = (e.ProgressPercentage * 100) / 50;
 
             progressBarSiteType.Value = Math.Round(percent, 0);
+
+            if (progressBarSiteType.Visibility.ToString() != "Visible")
+            {
+                tb_message.Text = "";
+                tb_progressbar.Text = "please wait while we perform the tasks...";
+                B_Install.IsEnabled = false;
+                b_testconnection.IsEnabled = false;
+                b_testAcc.IsEnabled = false;
+                progressBarSiteType.Visibility = Visibility.Visible;
+
+            }
+            
 
 
 

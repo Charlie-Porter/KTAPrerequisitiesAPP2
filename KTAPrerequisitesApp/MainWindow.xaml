@@ -14,7 +14,7 @@
         </Grid.RowDefinitions>
         <DataGrid x:Name="dataGridInstallType" Visibility="Visible" HorizontalAlignment="Left" Width="582" IsSynchronizedWithCurrentItem="False" BorderBrush="#FFC8C8C8" SelectionChanged="dataGridInstallType_SelectionChanged" RenderTransformOrigin="0.5,0.5" Margin="1,353,0,10" />
 
-        <Button x:Name="B_Install" ToolTipService.ShowOnDisabled="True" IsEnabled="False" Content="Install" HorizontalAlignment="Left" Margin="507,321,0,0" VerticalAlignment="Top" Width="75" Click="B_Install_Click" RenderTransformOrigin="-0.809,2.717" ToolTip="To enable please enter a service account which either exists locally or in AD" Height="20"/>
+        <Button x:Name="B_Install" ToolTipService.ShowOnDisabled="True" IsEnabled="False" Content="Install" HorizontalAlignment="Left" Margin="507,328,0,0" VerticalAlignment="Top" Width="75" Click="B_Install_Click" RenderTransformOrigin="-0.809,2.717" ToolTip="To enable please enter a service account which either exists locally or in AD" Height="20"/>
         <ComboBox x:Name="comboBoxInstallType" SelectedIndex="0" HorizontalAlignment="Left" Margin="247,26,0,0" VerticalAlignment="Top" Width="335" SelectionChanged="comboBoxInstallType_SelectionChanged" Height="22">
             <System:String>TotalAgility WebApp server(Including OPMT)</System:String>
             <System:String>TotalAgility Web Only(Including OPMT)</System:String>
@@ -25,17 +25,18 @@
             <System:String>TotalAgility RTTS</System:String>
             <System:String>TotalAgility DB Only</System:String>
         </ComboBox>
-        <ProgressBar x:Name="progressBarSiteType" HorizontalAlignment="Left" Margin="10,321,0,0" VerticalAlignment="Top" Width="492" Height="20" Background="#FF252525" />
+        <ProgressBar x:Name="progressBarSiteType" Visibility="Hidden" HorizontalAlignment="Left" Margin="10,233,0,0" VerticalAlignment="Top" Width="573" Height="20" Background="#FF252525" ScrollViewer.VerticalScrollBarVisibility="Hidden" />
+        <TextBlock x:Name="tb_progressbar" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="189,233,212,395" RenderTransformOrigin="0.504,0.354" Width="191"/>
         <Label x:Name="label" Content="Please select the KTA install type:" HorizontalAlignment="Left" Margin="10,24,0,0" VerticalAlignment="Top" Height="26" Width="215"/>
         <Label x:Name="l_ServiceAcc" Content="Please enter your service account:" HorizontalAlignment="Left" Margin="10,50,0,0" VerticalAlignment="Top" Height="26" Width="215"/>
         <TextBox x:Name="txt_ServiceAcc"   HorizontalAlignment="Left" Height="23" Margin="247,53,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="255" Text="domain\account "/>
         <Label x:Name="l_sqlserver" Content="Microsoft SQL server instance location:" HorizontalAlignment="Left" Margin="10,80,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.413,-0.476" Height="26" Width="215"/>
         <TextBox x:Name="txt_sqlserver" HorizontalAlignment="Left" Height="23" Margin="247,81,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="255"/>
         <Button x:Name="b_testconnection" Content="Test" HorizontalAlignment="Left" Margin="508,81,0,0" VerticalAlignment="Top" Width="75" Height="23" Click="b_testconnection_Click"/>
-        <TextBlock x:Name="tb_message" IsEnabled="False" TextWrapping="WrapWithOverflow" HorizontalAlignment="Left" Margin="10,244,0,0" VerticalAlignment="Top" Width="457" Height="72"><Run Text="User Guide"/><Run Text=":  Please enter the service account and "/><Run Text="SQL instance "/><Run Text="access details"/><Run Text="."/><Run Text=" The install button will be disabled "/><Run Text="until "/><Run Text="a service account is found locally or in Active Directory."/><Run Text="  Please note you can bypass granting DBCreator rights by leaving"/><Run Text=" the"/><Run Text=" "/><Run Text="SQL server location "/><Run Text="blank."/></TextBlock>
+        <TextBlock x:Name="tb_message" IsEnabled="False" TextWrapping="WrapWithOverflow" HorizontalAlignment="Left" Margin="10,258,0,0" VerticalAlignment="Top" Width="572" Height="64"><Run Text="User Guide"/><Run Text=":  Please enter the service account and "/><Run Text="SQL instance "/><Run Text="access details"/><Run Text="."/><Run Text=" The install button will be disabled "/><Run Text="until "/><Run Text="a service account is found locally or in Active Directory."/><Run Text="  Please note you can bypass granting DBCreator rights by leaving"/><Run Text=" the"/><Run Text=" "/><Run Text="SQL server location "/><Run Text="blank."/></TextBlock>
         <CheckBox x:Name="cb_dbcreator" Content="Use a different account for DB creation" HorizontalAlignment="Left" Margin="10,111,0,0" VerticalAlignment="Top" Click="cb_dbcreator_Checked" Width="225"/>
 
-        <GroupBox x:Name="groupBox" Visibility="Collapsed" Header="Please select your authentication mode and enter account:" HorizontalAlignment="Left" Height="115" Margin="10,136,0,0" VerticalAlignment="Top" Width="572" Grid.Column="0" RenderTransformOrigin="0.49,0.292">
+        <GroupBox x:Name="groupBox" Visibility="Visible" IsEnabled="False" Header="Uncheck as appropriate to specify a different DB creator and Test connection:" HorizontalAlignment="Left" Height="92" Margin="10,136,0,0" VerticalAlignment="Top" Width="572" Grid.Column="0" RenderTransformOrigin="0.49,0.292">
             <Grid Grid.Row="0" Column="0" Margin="0,0,0,-31">
                 <Grid.RowDefinitions>
                     <RowDefinition/>
@@ -47,15 +48,15 @@
                     <ColumnDefinition Width="75*"/>
                 </Grid.ColumnDefinitions>
 
-                <Label x:Name="l_sqluser"  Grid.Column="1" Grid.Row="0" Content="SQL User:" HorizontalAlignment="Left"  VerticalAlignment="Top" IsEnabled="False" Visibility="Collapsed" Height="26" Width="61"/>
-                <Label x:Name="l_sqlpassword"  Grid.Column="1" Content="SQL Password:" VerticalAlignment="Top" IsEnabled="False" Height="23" Visibility="Collapsed" Margin="0,29,16,0"/>
-                <TextBox x:Name="txt_sqlpassword" Grid.Column="2" Height="23" TextWrapping="Wrap" VerticalAlignment="Top" IsEnabled="true" Visibility="Collapsed" Margin="0,29,0,0"/>
-                <TextBox x:Name="txt_SQLuser" HorizontalAlignment="Left" Height="23" TextWrapping="Wrap" VerticalAlignment="Top" Width="145" IsEnabled="True"  Visibility="Collapsed" Grid.Column="2"/>
+                <Label x:Name="l_sqluser"  Grid.Column="1" Grid.Row="0" Content="SQL User:" HorizontalAlignment="Left"  VerticalAlignment="Top" IsEnabled="False" Visibility="Visible" Height="23" Width="61"/>
+                <Label x:Name="l_sqlpassword"  Grid.Column="1" Content="SQL Password:" VerticalAlignment="Top" IsEnabled="False" Height="23" Visibility="Visible" Margin="0,23,58,0" Grid.RowSpan="2"/>
+                <TextBox x:Name="txt_sqlpassword" Grid.Column="1" Height="23" TextWrapping="Wrap" VerticalAlignment="Top" IsEnabled="true" Visibility="Visible" Margin="95,26,0,0" Grid.RowSpan="2" Grid.ColumnSpan="2"/>
+                <TextBox x:Name="txt_SQLuser" HorizontalAlignment="Left" Height="23" TextWrapping="Wrap" VerticalAlignment="Top" Width="203" IsEnabled="True"  Visibility="Visible" Grid.Column="1" Grid.ColumnSpan="2" Margin="95,0,0,0"/>
                 <CheckBox x:Name="cb_winauth" Grid.Column="0" Grid.Row="0" Content="Use Windows Authentication:" HorizontalAlignment="Left"  VerticalAlignment="Top" IsChecked="True" Click="cb_winauth_Checked"  Visibility="Visible" Width="183"/>
-                <TextBox x:Name="txt_dbcreator" Grid.Column="1" Grid.Row="0" HorizontalAlignment="Left" Height="23"  TextWrapping="Wrap" VerticalAlignment="Top" Width="292" Text="domain\account" Visibility="Visible"  LostFocus="txt_dbcreator_LostFocus" Margin="6,6,0,0" Grid.ColumnSpan="2"  />
+                <TextBox x:Name="txt_dbcreator" Grid.Column="1" Grid.Row="0" HorizontalAlignment="Left" Height="23"  TextWrapping="Wrap" VerticalAlignment="Top" Width="297" Text="domain\account" Visibility="Collapsed"  LostFocus="txt_dbcreator_LostFocus" Margin="1,3,0,0" Grid.ColumnSpan="2"  />
 
             </Grid>
         </GroupBox>
-        <Button x:Name="txt_testAcc" Content="Test" HorizontalAlignment="Left" Margin="508,53,0,0" VerticalAlignment="Top" Width="75" Height="23" Click="txt_testAcc_Click"/>
+        <Button x:Name="b_testAcc" Content="Test" HorizontalAlignment="Left" Margin="508,53,0,0" VerticalAlignment="Top" Width="75" Height="23" Click="b_testAcc_Click"/>
     </Grid>
 </Window>
