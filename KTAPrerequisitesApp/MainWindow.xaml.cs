@@ -1,19 +1,19 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Data;
+using System.Data.SqlClient;
+using System.Diagnostics;
+using System.DirectoryServices.AccountManagement;
+using System.IO;
 using System.Linq;
+using System.Management;
+using System.Security.Principal;
 using System.Windows;
 using System.Windows.Controls;
-using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.IO;
-using System.Data;
-using System.Management;
-using Microsoft.Win32;
-using System.Data.SqlClient;
 using System.Windows.Media.Imaging;
-using System.Security.Principal;
-using System.DirectoryServices.AccountManagement;
-using System.ComponentModel;
 
 
 namespace KTAPrerequisitesApp
@@ -160,11 +160,11 @@ namespace KTAPrerequisitesApp
 
         async private void B_Install_Click(object sender, RoutedEventArgs e)
         {
-            //tb_message.Text = "";
-            //B_Install.IsEnabled = false;           
-            //b_testconnection.IsEnabled = false;
-            //b_testAcc.IsEnabled = false;
-            //progressBarSiteType.Visibility = Visibility.Visible;
+            tb_message.Text = "";
+            B_Install.IsEnabled = false;           
+            b_testconnection.IsEnabled = false;
+            b_testAcc.IsEnabled = false;
+            progressBarSiteType.Visibility = Visibility.Visible;
 
             //' Clear existing items from observable collection
             if (dataGridInstallType.Items.Count >= 1)
@@ -200,22 +200,20 @@ namespace KTAPrerequisitesApp
 
             if (comboBoxInstallType.SelectedIndex == 0 || comboBoxInstallType.SelectedIndex == 2 || comboBoxInstallType.SelectedIndex == 3 || comboBoxInstallType.SelectedIndex == 4 || comboBoxInstallType.SelectedIndex == 5 || comboBoxInstallType.SelectedIndex == 6)
             {
-
-
-                string dbcreatorResult;
-                if (cb_winauth.IsChecked == true)
-                {
-                    dbcreatorResult = CheckSqlServerUserAccount(txt_ServiceAcc.Text, txt_sqlpassword.Text, txt_sqlserver.Text, true);
-
-                }
-                else
-                {
-                    dbcreatorResult = CheckSqlServerUserAccount(txt_SQLuser.Text, txt_sqlpassword.Text, txt_sqlserver.Text, false);
-                }
-
                 progressBarValue = 1;
                 if (!string.IsNullOrEmpty(txt_sqlserver.Text))
                 {
+                    string dbcreatorResult;
+                    if (cb_IsSQLUserdbcreator.IsChecked == false)
+                    {
+                        dbcreatorResult = CheckSqlServerUserAccount(txt_ServiceAcc.Text, txt_sqlpassword.Text, txt_sqlserver.Text, true);
+
+                    }
+                    else
+                    {
+                        dbcreatorResult = CheckSqlServerUserAccount(txt_SQLuser.Text, txt_sqlpassword.Text, txt_sqlserver.Text, false);
+                    }
+
                     installTypeCollection.Add(new WindowsFeature { Name = "Grant SQL dbcreator role", Result = dbcreatorResult });
                     dataGridInstallType.ScrollIntoView(installTypeCollection[installTypeCollection.Count - 1]);
                 }
@@ -563,8 +561,19 @@ namespace KTAPrerequisitesApp
             try
             {
                 LsaWrapper lsaUtility = new LsaWrapper();
-                lsaUtility.SetRight(userName, "SeServiceLogonRight");
-                return ("Granted Logon as a Service right");
+                long result = lsaUtility.SetRight(userName, "SeServiceLogonRight");
+
+                if (result == 0)
+                {
+                    return ("Granted Logon as a Service right");
+                }
+                else
+                {
+                    return ($@"Error granting Logon as a Service right. Error code: {result}");
+                }
+                
+
+
             }
             catch (Exception ex)
             {
@@ -577,8 +586,15 @@ namespace KTAPrerequisitesApp
             try
             {
                 LsaWrapper lsaUtility = new LsaWrapper();
-                lsaUtility.SetRight(userName, "SeAssignPrimaryTokenPrivilege");
-                return ("Granted Replace a process level token right");
+                long result = lsaUtility.SetRight(userName, "SeAssignPrimaryTokenPrivilege");
+                if (result == 0)
+                {
+                    return ("Granted Replace a process level token right");
+                }
+                else
+                {
+                    return ($@"Error granting Replace a process level token right. Error code: {result}");
+                }
             }
             catch (Exception ex)
             {
@@ -591,8 +607,16 @@ namespace KTAPrerequisitesApp
             try
             {
                 LsaWrapper lsaUtility = new LsaWrapper();
-                lsaUtility.SetRight(userName, "SeCreateTokenPrivilege");
-                return ("Granted Create a token object right");
+                long result = lsaUtility.SetRight(userName, "SeCreateTokenPrivilege");
+
+                if (result == 0)
+                {
+                    return ("Granted Create a token object right");
+                }
+                else
+                {
+                    return ($@"Error granting Create a token object right. Error code: {result}");
+                }
             }
             catch (Exception ex)
             {
@@ -606,8 +630,15 @@ namespace KTAPrerequisitesApp
             try
             {
                 LsaWrapper lsaUtility = new LsaWrapper();
-                lsaUtility.SetRight(userName, "SeIncreaseQuotaPrivilege");
-                return ("Granted Adjust memory quotas for a process");
+                long result = lsaUtility.SetRight(userName, "SeIncreaseQuotaPrivilege");
+                if (result == 0)
+                {
+                    return ("Granted Adjust memory quotas for a process");
+                }
+                else
+                {
+                    return ($@"Error granting Adjust memory quotas for a process. Error code: {result}");
+                }
             }
             catch (Exception ex)
             {
@@ -697,13 +728,13 @@ namespace KTAPrerequisitesApp
 
         private void cb_winauth_Checked(object sender, RoutedEventArgs e)
         {
-            if (cb_winauth.IsChecked == true)
+            if (cb_IsSQLUserdbcreator.IsChecked == true)
             {
                 txt_SQLuser.Visibility = Visibility.Collapsed;
                 txt_sqlpassword.Visibility = Visibility.Collapsed;
                 l_sqlpassword.Visibility = Visibility.Collapsed;
                 l_sqluser.Visibility = Visibility.Collapsed;
-                txt_dbcreator.Visibility = Visibility.Visible;
+               
 
 
             }
@@ -713,76 +744,16 @@ namespace KTAPrerequisitesApp
                 txt_sqlpassword.Visibility = Visibility.Visible;
                 l_sqlpassword.Visibility = Visibility.Visible;
                 l_sqluser.Visibility = Visibility.Visible;
-                txt_dbcreator.Visibility = Visibility.Collapsed;
+               
             }
         }
 
 
 
-        private void txt_dbcreator_LostFocus(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("Please click ok to to start validatingion of the account");
-
-            try
-            {
-                char[] charSeparators = new char[] { '\\' };
-                var dbcreatorAcc = txt_dbcreator.Text.Split(charSeparators);
-
-                if (!CheckUserinAD(dbcreatorAcc[0], dbcreatorAcc[1]))
-                {
 
 
 
-                    if (!localUserExists(txt_dbcreator.Text))
-                    {
-                        tb_message.Text = "Failure - The windows account for DB creation cannot be found in Active Directory or local machine. The install button will be disabled until the account is found.";
-                        B_Install.IsEnabled = false;
-                    }
-                    else
-                    {
-
-                        tb_message.Text = "Success - The windows account for DB creation was found in your local machine. ";
-                        B_Install.IsEnabled = true;
-                    }
-
-
-                }
-                else
-                {
-                    tb_message.Text = "Success - The windows account for DB creation was found in Active Directory.";
-                    B_Install.IsEnabled = true;
-                }
-            }
-            catch (Exception ex)
-            {
-                try
-                {
-                    if (!localUserExists(txt_dbcreator.Text))
-                    {
-                        tb_message.Text = $@"Failure - The windows account for DB creation was found in Active Directory - Error:{ex.Message}.  Also, the account was not found in this local machine. The install button will be disabled until the account is found.";
-                        B_Install.IsEnabled = false;
-                    }
-                    else
-                    {
-
-                        tb_message.Text = "Success - The windows account for DB creation was found was found in your local machine. ";
-                        B_Install.IsEnabled = true;
-                    }
-                }
-                catch (Exception exc)
-                {
-                    tb_message.Text = $@"Failure - The windows account for DB creation was found on this local machine  -Error:{exc.Message}. Also, the account was not found in Active Directory - Error:{ex.Message}. The install button will be disabled until the account is found.";
-                    B_Install.IsEnabled = false;
-                }
-
-
-            }
-
-
-
-
-
-        }
+        
 
         static bool localUserExists(string User)
         {
@@ -813,9 +784,9 @@ namespace KTAPrerequisitesApp
             progressBarSiteType.Maximum = 100;
             
 
-            if (cb_dbcreator.IsChecked == true)
+            if (cb_IsSQLUserdbcreator.IsChecked == false)
             {
-                object[] HostVars = new object[] { txt_dbcreator.Text, txt_sqlpassword.Text, txt_sqlserver.Text, cb_winauth.IsEnabled };
+                object[] HostVars = new object[] { txt_ServiceAcc.Text, txt_sqlpassword.Text, txt_sqlserver.Text, "true" };
 
                 
                 if (!worker.IsBusy)
@@ -826,7 +797,7 @@ namespace KTAPrerequisitesApp
             }
             else
             {
-                object[] HostVars = new object[] { txt_ServiceAcc.Text, txt_sqlpassword.Text, txt_sqlserver.Text, cb_winauth.IsEnabled };
+                object[] HostVars = new object[] { txt_SQLuser.Text, txt_sqlpassword.Text, txt_sqlserver.Text, "false" };
 
                 worker.DoWork += new DoWorkEventHandler(worker_DoWork_b_testconnection_Click);
                 if (!worker.IsBusy)
@@ -867,7 +838,7 @@ namespace KTAPrerequisitesApp
             {
                 tb_message.Dispatcher.Invoke(new Action(delegate ()
                 {
-                    tb_message.Text = $@"Failure - The test was unsucessful: {ex.Message}";
+                    tb_message.Text = $@"Failure - The test was unsuccessful: {ex.Message}";
                 }));
             }
 
@@ -885,7 +856,7 @@ namespace KTAPrerequisitesApp
         {
             
             
-            if (cb_dbcreator.IsChecked == true)
+            if (cb_IsSQLUserdbcreator.IsChecked == true)
             {
 
                 groupBox.IsEnabled = true;
@@ -1043,6 +1014,7 @@ namespace KTAPrerequisitesApp
         void worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
 
+            
             b_testAcc.IsEnabled = true;
             b_testconnection.IsEnabled = true;
             progressBarSiteType.Visibility = Visibility.Hidden;
